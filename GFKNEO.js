@@ -1,4 +1,3 @@
-	
 function GFK_NEO()
 {	
 	$(document).ready(function ()
