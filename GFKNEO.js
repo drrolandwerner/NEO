@@ -1,8 +1,35 @@
+function loadjscssfile(filename, filetype){
+ if (filetype=="js"){ //if filename is a external JavaScript file
+  var fileref=document.createElement('script')
+  fileref.setAttribute("type","text/javascript")
+  fileref.setAttribute("src", filename)
+ }
+ else if (filetype=="css"){ //if filename is an external CSS file
+  var fileref=document.createElement("link")
+  fileref.setAttribute("rel", "stylesheet")
+  fileref.setAttribute("type", "text/css")
+  fileref.setAttribute("href", filename)
+ }
+ if (typeof fileref!="undefined")
+  document.getElementsByTagName("head")[0].appendChild(fileref)
+}
+
+
 function GFK_NEO()
 {	
 	$(document).ready(function ()
 	{
 
+	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/jquery-1.11.1.min.js", "js") 
+	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.layout.cloud.js", "js") 
+	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.min.js", "js") 
+	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.layout.cloud.js", "js") 
+	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/underscore-min.js", "js") 
+	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/underscore-min.js", "js") 
+	loadjscssfile("http://cdn.webix.io/edge/webix.js", "js") 
+	loadjscssfile("http://cdn.webix.io/edge/webix.css", "css") 
+
+	
 	$(".ls").hide();
 	
 	var color = d3.scale.category20c();
