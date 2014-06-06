@@ -17,9 +17,6 @@ function loadjscssfile(filename, filetype){
 
 function GFK_NEO()
 {	
-	$(document).ready(function ()
-	{
-
 	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/jquery-1.11.1.min.js", "js") 
 	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.layout.cloud.js", "js") 
 	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.min.js", "js") 
@@ -1434,6 +1431,4 @@ function MakeTreemap(jsonData)
 
 	
 	});  //JSON LOad
-
-	}); // document ready
 }
