@@ -1,81 +1,20 @@
-function loadjscssfile(filename, filetype){
- if (filetype=="js"){ //if filename is a external JavaScript file
-  var fileref=document.createElement('script')
-  fileref.setAttribute("type","text/javascript")
-  fileref.setAttribute("src", filename)
- }
- else if (filetype=="css"){ //if filename is an external CSS file
-  var fileref=document.createElement("link")
-  fileref.setAttribute("rel", "stylesheet")
-  fileref.setAttribute("type", "text/css")
-  fileref.setAttribute("href", filename)
- }
- if (typeof fileref!="undefined")
-  document.getElementsByTagName("head")[0].appendChild(fileref)
-}
+ loadCSS = function(href) {
+     var cssLink = $("<link rel='stylesheet' type='text/css' href='"+href+"'>");
+     $("head").append(cssLink); 
+ };
 
-function GetHttpRequest()
-{
-if ( window.XMLHttpRequest ) // Gecko
-return new XMLHttpRequest() ;
-else if ( window.ActiveXObject ) // IE
-return new ActiveXObject("MsXml2.XmlHttp") ;
-}
-function AjaxPage(sId, url)
-{
-	var oXmlHttp = GetHttpRequest() ;
-	oXmlHttp.OnReadyStateChange = function()
-	{
-	if ( oXmlHttp.readyState == 4 )
-	{
-	if ( oXmlHttp.status == 200 || oXmlHttp.status == 304 )
-	{
-	IncludeJS( sId, url, oXmlHttp.responseText );
-	}
-	else
-	{
-	alert( 'XML request error: ' + oXmlHttp.statusText + ' (' + oXmlHttp.status + ')' ) ;
-	}
-	}
-	}
-	oXmlHttp.open('GET', url, true);
-	oXmlHttp.send(null);
-}
-
-function IncludeJS(sId, fileUrl, source)
-{
-	if ( ( source != null ) && ( !document.getElementById( sId ) ) ){
-	var oHead = document.getElementsByTagName('HEAD').item(0);
-	var oScript = document.createElement( "script" );
-	oScript.language = "javascript";
-	oScript.type = "text/javascript";
-	oScript.id = sId;
-	oScript.defer = true;
-	oScript.text = source;
-	oHead.appendChild( oScript );
-	}
-}
-
-
-
-
+ loadJS = function(src) {
+     var jsLink = $("<script type='text/javascript' src='"+src+"'>");
+     $("head").append(jsLink); 
+ }; 
+  
 function GFK_NEO()
 {	
-	AjaxPage( "jsJQUERY", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/jquery-1.11.1.min.js" );
-	AjaxPage( "jsD3", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.min.js" );
-	AjaxPage( "jsUNDERSCORE", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/underscore.min.js" );
-	AjaxPage( "jsJQUERY", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/jquery-1.11.1.min.js" );
-	AjaxPage( "jsJQUERY", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/webix.js" );
-
-	loadjscssfile("http://cdn.webix.io/edge/webix.css", "css") 
-
 	
 	$(".ls").hide();
 	$(".xt").hide();
 	
 	var color = d3.scale.category20c();
-
-	
 	var jsonHierarchy = new Object();
 	var tableData = "[";
 	var jsonData = new Object();
@@ -192,13 +131,13 @@ function GFK_NEO()
 		var periods = _.keys(_.countBy(jsonData, function(jsonData) { return jsonData.Period; }));		
 		periods.sort();
 		for (var index = 0; index < periods.length; ++index)
-			filterPeriod.push({id:index+1, value:periods[index]});
+			filterPeriod.push(periods[index]);
 	
 		var filterCountry = new Array();
 		var countries = _.keys(_.countBy(jsonData, function(jsonData) { return jsonData.Country; }));
 		countries.sort();
 		for (var index = 0; index < countries.length; ++index)
-			filterCountry.push({id:index+1, value:countries[index]});
+			filterCountry.push(countries[index]);
 			
 		var filterBrand = new Array({id:1, value:"all"});
 		
@@ -209,26 +148,117 @@ function GFK_NEO()
 		
 		var KPIs = new Array({id:1, value:"Units"},{id:2, value:"Value"});
 		
-		featureKeys = new Array({id:1, value:"all"});
+		featureKeys = new Array();
 		countKeys = 1;
 		for (var key in jsonData[0])
 		{
-			if (key !=="Country" && key !== "Period" && key !== "Units" && key !== "Value")
+			if (key !== "Units" && key !== "Value")
 			{			
 				countKeys += 1;
-				theKey = new Object();
-				theKey.id = countKeys;
-				theKey.value = key;
-				featureKeys.push(theKey);
+				featureKeys.push(key);
 			}
 		}
 
-		segment1 = featureKeys[segment1Val-1].value;
-		segment2 = featureKeys[segment2Val-1].value;
-		segment3 = featureKeys[segment3Val-1].value;
-		segment4 = featureKeys[segment4Val-1].value;
-		segment5 = featureKeys[segment5Val-1].value;
+		segment1 = featureKeys[segment1Val-1];
 
+		
+		var template = kendo.template('<div id="panelBar"></div>');
+		$("body").html(template);
+	
+		var panelBar = $("#panelBar").kendoPanelBar(
+		{
+			expandMode: "multiple", 
+			animation: {collapse: {duration: 0},expand: {duration: 0}}
+		}).data("kendoPanelBar");
+		
+		panelBar.append(
+        [
+            {
+                text: "<b>Controls</b>",
+				expanded: false,
+ 				encoded: false, 
+				content: "<div class='panelControls' id='panelControls'></div>"
+            },
+            {
+                text: "<b>Analytics</b>",
+				expanded: true,
+				encoded: false,                                 
+				content: "<div class='k-content' id='panelAnalytics'><div id='analyticsBreadcrump'></div><div id='analyticsChart'></div></div>"
+           }
+		]);
+		
+	//	var template = kendo.template('<div id="panelControlsFeatures"></div>');
+	//	$("#panelControls").html(template);
+		
+		var tabStripControls = $("#panelControls").kendoTabStrip(
+		{
+			animation: false,
+			value: ["Segments"],
+		}).data("kendoTabStrip");
+
+		tabStripControls.append(
+		[
+			{
+				text: "Segments",
+				encoded: false,                            
+				content: "<div class='panelControlSegments' id='panelControlSegments'></div>"
+			},
+			{
+				text: "Filters",
+				 encoded: false,                            
+				content: "<div class='panelControlFilterCountry' id='panelControlFilterCountry'></div><div class='panelControlFilterPeriod' id='panelControlFilterPeriod'></div><div class='panelControlFilterShare' id='panelControlFilterShare'></div>"
+			},
+			{
+				text: "Analytics",
+				 encoded: false,                            
+				content: "<div class='panelControlAnalytics' id='panelControlAnalytics'></div>"
+			}
+		]);
+		
+		var multiSelectSegmentation = $("#panelControlSegments").kendoMultiSelect(
+		{
+			animation: false,
+			multiple: "multiple",
+			dataSource: featureKeys,
+			value: ["Brand"],
+			change: function(e) {toolbarChanged();}
+		}).data("kendoMultiSelect");
+		
+		var dropDownFilterCountry = $("#panelControlFilterCountry").kendoDropDownList(
+		{
+			animation: false,
+			dataSource: filterCountry,
+			value: filterCountry[0],
+			change: function(e) {toolbarChanged();}
+		}).data("kendoDropDownList");
+
+		var dropDownFilterPeriod = $("#panelControlFilterPeriod").kendoDropDownList(
+		{
+			animation: false,
+			dataSource: filterPeriod,
+			value: filterPeriod[0],
+			change: function(e) {toolbarChanged();}
+		}).data("kendoDropDownList");
+		
+		var sliderFilterShare = $("#panelControlFilterShare").kendoSlider(
+		{
+			min: 0,
+			max: 10,
+			smallStep: 0.1,
+			largeStep: 1,
+			value: 1,
+			showButtons: false,
+			slide: function(e) {toolbarChanged();},
+			change: function(e) {toolbarChanged();}
+		}).data("kendoSlider");
+		
+		
+		
+		tabStripControls.select(0);    
+		
+		
+		
+		/*
 		myWebix = webix.ui({
 		view:"accordion",
 		//autowidth:true, autoheight:true,
@@ -286,7 +316,7 @@ function GFK_NEO()
 									{id:"D3Sequence", css: "sequence", height: 40, width:700},
 									{ view:"label", id:"D3Link", css: "labelLink", align:"right", label: ""}
 								]}},
-				{view:"accordion", id:"chartContainer", type:"space", height: "100%", autowidth:true, autoheight:true,	
+				{view:"accordion", id:"panelAnalytics", type:"space", height: "100%", autowidth:true, autoheight:true,	
 					cols:[
 						{ header:"Sunburst", container:"D3Sunburst", collapsed: true,  body:
 							{cols: 
@@ -324,7 +354,8 @@ function GFK_NEO()
 	$$("minshare").attachEvent("onSliderDrag", function(){minShare=this.getValue();toolbarChanged();});
 	$$("playButton").attachEvent("onChange", function(newv, oldv){ playPeriods(newv);});
 
-	MakePivot(jsonData);
+	*/
+	//MakePivot(jsonData);
 	MakeBreadcrump();
 	toolbarChanged();
 
@@ -370,10 +401,10 @@ function GFK_NEO()
 	
 	function toolbarChanged()
 	{					
-		period = $$("filter_period").getText();
-		country = $$("filter_country").getText();
-		brand = $$("filter_brand").getText();
-		//$$("labelPeriod").setValue(period);
+		period = dropDownFilterPeriod.value();
+		country = dropDownFilterCountry.value();
+		minShare = sliderFilterShare.value();
+		//brand = $$("filter_brand").getText();
 		
 		jsonDataFiltered = _.filter(jsonData, function(record)		
 		{ 
@@ -391,17 +422,13 @@ function GFK_NEO()
 			}
 		}
 		
-		$$("numRecords").setValue(jsonDataFiltered.length + "/" + jsonData.length);
+		//$$("numRecords").setValue(jsonDataFiltered.length + "/" + jsonData.length);
 
-		$$("minsharepercentage").setValue((minShare/10)+"%");
-		nesting = [];
+		//$$("minsharepercentage").setValue((minShare)+"%");
+		nesting = multiSelectSegmentation.value();
 		var json2 = d3.nest();
-		if (segment1!=="all") nesting.push(segment1);
-		if (segment2!=="all") nesting.push(segment2);
-		if (segment3!=="all") nesting.push(segment3);
-		if (segment4!=="all") nesting.push(segment4);
-		if (segment5!=="all") nesting.push(segment5);
-		/*
+
+			/*
 		nesting.forEach(function(key) {
 			json2.key(function(d) {return d[key]; }).sortKeys(d3.ascending)
 		});
@@ -413,13 +440,13 @@ function GFK_NEO()
 		*/
 		if (true)
 		{
-				initializeBreadcrumbTrail();
+			initializeBreadcrumbTrail();
 
 			MakeSunburst(jsonDataFiltered);
-			MakeTreemap(jsonDataFiltered);
+			//MakeTreemap(jsonDataFiltered);
 			//MakeBubblechart(jsonDataFiltered);
 			//MakeWordCloud(jsonDataFiltered);
-			UpdatePivot(jsonDataFiltered);
+			//UpdatePivot(jsonDataFiltered);
 		}
 	}
 	
@@ -496,8 +523,8 @@ function MakeBubblechart(jsonData)
     }, 0);
 	}
 	
-		var width = $("[view_id='chartContainer']").innerWidth();
-		var height = $("[view_id='chartContainer']").innerHeight()-30;	
+		var width = $("[view_id='panelAnalytics']").innerWidth();
+		var height = $("[view_id='panelAnalytics']").innerHeight()-30;	
 	
 	var margin = {top: 20, right: 0, bottom: 0, left: 0};
 	
@@ -835,8 +862,8 @@ function MakeTreemap(jsonData)
 	
 	var totalMarket = d3.sum(jsonDataTreemap, function(d) { return d[kpi]; });
 	
-	var width = $("[view_id='chartContainer']").innerWidth();
-		var height = $("[view_id='chartContainer']").innerHeight()-30;	
+	var width = $("[view_id='panelAnalytics']").innerWidth();
+		var height = $("[view_id='panelAnalytics']").innerHeight()-30;	
 		var radius = Math.min(width, height) / 2;
 
 		var json2 = d3.nest();	
@@ -1083,8 +1110,8 @@ function MakeTreemap(jsonData)
 		
 		jsonDataSunburst = JSON.parse(JSON.stringify(jsonData)); 
 
-		var width = $("[view_id='chartContainer']").innerWidth();
-		var height = $("[view_id='chartContainer']").innerHeight()-60;	
+		var width = 800; //$("[view_id='panelAnalytics']").innerWidth();
+		var height = 500; //$("[view_id='panelAnalytics']").innerHeight()-60;	
 		var radius = Math.min(width, height) / 2;
 
 		var json2 = d3.nest();	
@@ -1107,13 +1134,13 @@ function MakeTreemap(jsonData)
 
 	
 	//d3.select("[view_id='D3Link']").remove(); 
-	$$("D3Link").setValue("");
-	d3.select("[view_id='D3SunburstChart']").select("svg").remove();
-	var div = d3.select("[view_id='D3View']").append("div")   
+	//$$("D3Link").setValue("");
+	d3.select("#analyticsChart").select("svg").remove();
+	var div = d3.select("#analyticsChart").append("div")   
 		.attr("class", "tooltip")               
 		.style("opacity", 0);
 
-	gSunburst = d3.select("[view_id='D3SunburstChart']").append("svg")	
+	gSunburst = d3.select("#analyticsChart").append("svg")	
 		.attr("width", width + padding * 2)
 		.attr("height", height + padding * 2)
 		.attr("preserveAspectRatio","xMidYMin")
@@ -1151,7 +1178,7 @@ function MakeTreemap(jsonData)
 		nodes = partition.nodes(jsonDataSunburst)
 			.filter(function(d)
 			{
-				var minRadians = minShare/10 * 0.01; // 0.005 radians = 0.29 degrees			
+				var minRadians = minShare * 0.01; // 0.005 radians = 0.29 degrees			
 				return (d.dx > minRadians);
 			});
 			
@@ -1389,9 +1416,9 @@ function MakeTreemap(jsonData)
 		
 		function initializeBreadcrumbTrail() {
 	  // Add the svg area.
-	  d3.select("[view_id='D3Sequence']").select("svg").remove();
+	  d3.select("#analyticsBreadcrump").select("svg").remove();
 
-	  var trail = d3.select("[view_id='D3Sequence']").append("svg:svg")
+	  var trail = d3.select("#analyticsBreadcrump").append("svg:svg")
 		  .attr("width", 400)
 		  .attr("height", 50)
 		  .attr("id", "trail");
@@ -1469,7 +1496,7 @@ function MakeTreemap(jsonData)
 	theLinkTarget='http://www.google.com/search?q=' +theSearch;
 	theLinkTarget = encodeURI(theLinkTarget);
 	theLink = "<a href=" + theLinkTarget +">Search...</a>"; 
-	$$("D3Link").setValue(theLink);
+	//$$("D3Link").setValue(theLink);
 
 	}
 

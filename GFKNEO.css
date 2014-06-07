@@ -1,0 +1,286 @@
+
+
+
+.k-header
+{
+	height: 25px;
+	font: 12px sans-serif;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.panelControls
+{
+	height: 70px;
+	font: 12px sans-serif;
+	cursor: pointer;
+}
+
+.panelControlSegments
+{
+	height: 25px;
+	font: 12px sans-serif;
+	cursor: pointer;
+}
+
+.panelControlFilterCountry .panelControlFilterPeriod
+{
+	height: 25px;
+	font: 12px sans-serif;
+	cursor: pointer;
+}
+
+.panelControlAnalytics
+{
+	height: 25px;
+	font: 12px sans-serif;
+	cursor: pointer;
+}
+
+#panelAnalytics
+{
+	height: 200;
+}
+
+.pane-content {
+	padding: 0 10px;
+}
+    
+		path {
+	  stroke: #000;
+	  stroke-width: 1.5;
+	  cursor: pointer;
+	}
+
+	text {
+	  font: 12px sans-serif;
+	  cursor: pointer;
+	}
+	
+	.infotext 
+	{
+		padding: 8px;
+		font: 14px sans-serif;
+		display: block;
+	   vertical-align: middle;
+	}
+
+	.sequence 
+	{
+		padding: 4px;
+	}
+	
+	.labelLink 
+	{
+		padding: 48px;
+		font: 9px sans-serif;
+		font-family: arial, helvetica, sans-serif;
+
+	}
+	
+
+	   .sunchart 
+	{
+		margin: 0 auto;
+	   }
+	   
+	.chart 
+	{
+
+		margin: 0 auto;
+/*	text-align: center;
+       position: absolute;
+       left: 0;
+       right: 0;
+	*/   }
+	
+	.chart .wrapper
+	{	
+		position:relative; 
+		left:-50%;
+	}
+	
+	div.tooltip {   
+		position: absolute;           
+		vertical-align: middle;
+		text-align: center;    
+		bottom: 5px;
+		right: 5px;
+		width: 150px;                  
+		height: 14px;                 
+		padding: 2px;             
+		font: 12px sans-serif;        
+		background: lightsteelblue;   
+		border: 0px;      
+		border-radius: 8px;           
+		pointer-events: none;         
+	}
+
+
+	.popup {
+//		position: absolute;
+		left: 10;
+		bottom: 20;
+		//background-color: #fff;
+		width: 600px;
+		height: 20px;
+		//border: 1px #ccc solid;
+		border-radius: 6px;
+		//box-shadow: #333 2px 2px 4px;
+		padding: 8px;
+		font-family: 12px arial, helvetica, sans-serif;
+	}
+	
+	
+rect {
+  fill: none;
+  stroke: #fff;
+}
+
+rect.parent,
+.grandparent rect {
+  stroke-width: 5px;
+}
+.tree_chart {
+  display: block;
+  margin: auto;
+  margin-top: 40px;
+}
+
+.tree_grandparent text {
+  font-weight: bold;
+}
+
+.tree_rect {
+  fill: none;
+  cursor: pointer;
+
+  stroke: #fff;
+}
+
+tree_rect:hover tree_parent {
+  fill: #bbb;
+}
+
+
+
+.children tree_parent,
+.grandparent rect {
+  cursor: pointer;
+}
+
+.children tree_parent {
+  fill: #bbb;
+  fill-opacity: .5;
+}
+
+.children:hover tree_parent {
+  fill: #bbb;
+}
+
+rect:hover tree_parent {
+  fill: #bbb;
+}
+
+rect.tree_parent,
+.tree_grandparent tree_rect {
+  stroke-width: 2px;
+}
+
+rect.tree_parent {
+  fill: #bbb;
+}
+
+rect.tree_parent:hover tree_children {
+  fill: #bbb;
+}
+
+.tree_grandparent rect {
+  fill: orange;
+}
+
+.tree_grandparent:hover tree_rect {
+  cursor: pointer;
+ fill: #ee9700;
+}
+
+
+.tree_grandparent:hover tree_parent {
+  cursor: pointer;
+  fill: #ee9700;
+}
+
+.tree_grandparent:hover rect {
+  fill: #ee9700;
+}
+
+.tree_children tree_rect.parent,
+.tree_grandparent tree_rect {
+  cursor: pointer;
+}
+
+.tree_children tree_rect.parent {
+  fill: #bbb;
+  fill-opacity: .5;
+}
+
+.tree_children:hover tree_children.child {
+  fill: #bbb;
+}
+
+.tree_children {
+  fill: #bbb;
+  fill-opacity: .5;
+}
+
+.tree_child {
+  fill: #ccc;
+  fill-opacity: .5;
+}
+
+tree_child:hover tree_parent {
+  fill: #bbb;
+}
+.tree_parent {
+  fill: #ddd;
+  fill-opacity: .5;
+}
+
+rect {
+  fill: none;
+    cursor: pointer;
+}
+
+rect:hover rect.child {
+  fill: #bbb;
+}
+
+
+.dot {
+  stroke: #000;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.label {
+  fill: #777;
+}
+
+.year.label {
+  font: 500 196px "Helvetica Neue";
+  fill: #ddd;
+}
+
+.year.label.active {
+  fill: #aaa;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+  cursor: ew-resize;
+}	
