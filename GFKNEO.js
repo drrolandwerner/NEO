@@ -13,21 +13,65 @@ function loadjscssfile(filename, filetype){
  if (typeof fileref!="undefined")
   document.getElementsByTagName("head")[0].appendChild(fileref)
 }
+<script language="JavaScript">
+function GetHttpRequest()
+{
+if ( window.XMLHttpRequest ) // Gecko
+return new XMLHttpRequest() ;
+else if ( window.ActiveXObject ) // IE
+return new ActiveXObject("MsXml2.XmlHttp") ;
+}
+function AjaxPage(sId, url)
+{
+	var oXmlHttp = GetHttpRequest() ;
+	oXmlHttp.OnReadyStateChange = function()
+	{
+	if ( oXmlHttp.readyState == 4 )
+	{
+	if ( oXmlHttp.status == 200 || oXmlHttp.status == 304 )
+	{
+	IncludeJS( sId, url, oXmlHttp.responseText );
+	}
+	else
+	{
+	alert( 'XML request error: ' + oXmlHttp.statusText + ' (' + oXmlHttp.status + ')' ) ;
+	}
+	}
+	}
+	oXmlHttp.open('GET', url, true);
+	oXmlHttp.send(null);
+}
+
+function IncludeJS(sId, fileUrl, source)
+{
+	if ( ( source != null ) && ( !document.getElementById( sId ) ) ){
+	var oHead = document.getElementsByTagName('HEAD').item(0);
+	var oScript = document.createElement( "script" );
+	oScript.language = "javascript";
+	oScript.type = "text/javascript";
+	oScript.id = sId;
+	oScript.defer = true;
+	oScript.text = source;
+	oHead.appendChild( oScript );
+	}
+}
+
+
 
 
 function GFK_NEO()
 {	
-	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/jquery-1.11.1.min.js", "js") 
-	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.layout.cloud.js", "js") 
-	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.min.js", "js") 
-	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.layout.cloud.js", "js") 
-	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/underscore-min.js", "js") 
-	loadjscssfile("https://raw.githubusercontent.com/drrolandwerner/NEO/master/underscore-min.js", "js") 
-	loadjscssfile("http://cdn.webix.io/edge/webix.js", "js") 
+	AjaxPage( "jsJQUERY", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/jquery-1.11.1.min.js" );
+	AjaxPage( "jsD3", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/d3.min.js" );
+	AjaxPage( "jsUNDERSCORE", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/underscore.min.js" );
+	AjaxPage( "jsJQUERY", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/jquery-1.11.1.min.js" );
+	AjaxPage( "jsJQUERY", "https://raw.githubusercontent.com/drrolandwerner/NEO/master/webix.js" );
+
 	loadjscssfile("http://cdn.webix.io/edge/webix.css", "css") 
 
 	
 	$(".ls").hide();
+	$(".xt").hide();
 	
 	var color = d3.scale.category20c();
 
