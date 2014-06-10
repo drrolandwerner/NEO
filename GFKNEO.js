@@ -1,5 +1,5 @@
  loadCSS = function(href) {
-     var cssLink = $("<link rel='stylesheet' type='text/css' href='"+href+"'>");
+     var cssLink = $("<link rel='stylesheet' type='text/css' media='screen' href='"+href+"'>");
      $("head").append(cssLink); 
  };
 
@@ -9,34 +9,46 @@
  }; 
  
  
-
 function GFK_NEO(theDataType, theDataID)
 {
 	$(document).ready(function()
 	{
-		$.get("file://D:\rdwern\Documents\GitHub\NEO\d3.min.js")
-			.pipe($.get("file://D:\rdwern\Documents\GitHub\NEO\d3.min.js"))
-			.pipe($.get("http://cdn.kendostatic.com/2014.1.318/js/kendo.all.min.js", {}, function()
-			{
-				GFK_NEO_RUN(theDataType, theDataID);
-			}));
-	}); // document ready
-/*
+		var file_d3 = "https://rawgithub.com/drrolandwerner/NEO/master/d3.min.js";
+		var file_underscore = "https://rawgithub.com/drrolandwerner/NEO/master/underscore-min.js";
+		var file_kendo = "http://cdn.kendostatic.com/2014.1.318/js/kendo.all.min.js";
+		var file_css_neo = "https://rawgithub.com/drrolandwerner/NEO/master/GFKNEO.css";
+		var file_css_kendo_1 = "http://cdn.kendostatic.com/2014.1.318/styles/kendo.common.min.css";
+		var file_css_kendo_2 = "http://cdn.kendostatic.com/2014.1.318/styles/kendo.default.min.css";
+		var file_css_kendo_3 = "http://cdn.kendostatic.com/2014.1.318/styles/kendo.dataviz.min.css";
+		var file_css_kendo_4 = "http://cdn.kendostatic.com/2014.1.318/styles/kendo.dataviz.default.min.css";
+
+		//remove following lines
+		//file_d3 = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\d3.min.js";
+		//file_underscore = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\underscore-min.js";
+		//file_css_neo = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\GFKNEO.css";
+		// remove previous lines
+		
 		// Load D3.js library
-		$.getScript("file://D:\rdwern\Documents\GitHub\NEO\d3.min.js",function()
+		$.getScript(file_d3,function()
 		{
 			// Load underscore.js library
-			$.getScript("file://D:\rdwern\Documents\GitHub\NEO\d3.min.js",function()
+			$.getScript(file_underscore,function()
 			{
 				// Load KENDO-UI.js library
-				$.getScript("http://cdn.kendostatic.com/2014.1.318/js/kendo.all.min.js",function()
+				$.getScript(file_kendo,function()
 				{	
+					loadCSS(file_css_neo);
+					loadCSS(file_css_kendo_1);
+					loadCSS(file_css_kendo_2);
+					loadCSS(file_css_kendo_3);
+					loadCSS(file_css_kendo_4);
 					GFK_NEO_RUN(theDataType, theDataID);
 				})
 			})
 		})
 		
-*/		
+	
+	}); // document ready
 
 }
   
@@ -147,9 +159,13 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			var currentline=lines[i].split("\t");
 			for(var j=0;j<headers.length;j++)
 			{
-				var field = currentline[j].replace(/"/g, '');
-				field = field.replace(/\\/g, '');
-				obj[headers[j]] = field;
+				var field = currentline[j];
+				if (! $.isEmptyObject(field))
+				{
+					field = field.replace(/"/g, '');
+					field = field.replace(/\\/g, '');
+					obj[headers[j]] = field;
+				}
 			}
 				if (obj.Country=="Germany")
 					result.push(obj);
@@ -233,12 +249,20 @@ function GFK_NEO_RUN(theDataType, theDataID)
 
 	
 	var template = kendo.template('<div id="panelBar"></div>');
-	$(document).html(template);	//"body"
+	$("body").html(template);	//"body"
 
 	var panelBar = $("#panelBar").kendoPanelBar(
 	{
 		expandMode: "multiple", 
-		animation: {collapse: {duration: 0},expand: {duration: 0}}
+		collapse: function (e)
+			{
+				if (e.item.innerText.substr(0,9)=="Analytics") e.preventDefault();
+			},
+		expand: function (e)
+			{
+				//e.preventDefault();
+			},
+		animation: {collapse: {duration: 100},expand: {duration: 100}}
 	}).data("kendoPanelBar");
 	
 	panelBar.append(
@@ -253,13 +277,14 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			text: "<b>Analytics</b>",
 			expanded: true,
 			encoded: false,                                 
-			content: "<div id='loading'></div><div class='k-content' id='panelAnalytics'><div id='analyticsBreadcrump'></div><div id='analyticsChart'></div></div>"
+			content: "<div id='loading'></div>\
+			<div id='analyticsBreadcrump' class='analyticsBreadcrump'></div>\
+			<div id='analyticsChartContainer' class='analyticsChartContainer center'>\
+				<div id='analyticsChart' class='analyticsChart  halfcenter'></div>\
+			</div></div>"
 	   }
 	]);
-		
-	//	var template = kendo.template('<div id="panelControlsFeatures"></div>');
-	//	$("#panelControls").html(template);
-		
+	
 	var tabStripControls = $("#panelControls").kendoTabStrip(
 	{
 		animation: false,
@@ -268,6 +293,11 @@ function GFK_NEO_RUN(theDataType, theDataID)
 
 	tabStripControls.append(
 	[
+		{
+			text: "Analytics",
+			 encoded: false,                            
+			content: "<div>KPI: <div id='pcAnalyticsKPI'></div> Visualization: <div id='pcAnalyticsVisual' class='pcDrop'></div></div>"
+		},
 		{
 			text: "Brands",
 			encoded: false,                            
@@ -281,14 +311,16 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		{
 			text: "Filters",
 			 encoded: false,                            
-			content: "Country: <div id='pcFilterCountry' class='pcDrop'></div>min. Share: <div id='pcFilterShare' class='pcSlider'></div>Period:<div id='pcFilterPeriod' class='pcDrop'></div><div id='pcFilterPeriodSlider' class='pcSlider'></div><div id='pcFilterPeriodPlay' class='pcButton'></div>"
+			content: "<div>Country: <div id='pcFilterCountry' class='pcDrop'></div>min. Share: <div id='pcFilterShare' class='pcSlider'></div>Period:<div id='pcFilterPeriod' class='pcDrop'></div><div id='pcFilterPeriodSlider' class='pcSlider'></div><div id='pcFilterPeriodPlay' class='pcButton'></div></div>"
 		},
 		{
-			text: "Analytics",
-			 encoded: false,                            
-			content: "<div id='pcAnalytics' class='pcDrop'>KPI: <div id='pcAnalyticsKPI'></div> Visualization: <div id='pcAnalyticsVisual' class='pcDrop'></div></div>"
-		}
+			text: "Data",
+			encoded: false,                            
+			content: "<div id='pcDownload' class='pcButton'>Export Data...</div>"
+		},
+
 	]);
+	
 	
 	var multiSelectBrands = $("#pcBrands").kendoMultiSelect(
 	{
@@ -327,8 +359,9 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		select: function(e)
 		{
 			dataItem = e.item.index();
+			period = e.item.text();
 			sliderFilterPeriod.value(dataItem); 
-			toolbarChanged();
+			setTimeout(function() {toolbarChanged();},100);
 		}
 	}).data("kendoDropDownList");
 	
@@ -340,8 +373,8 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		largeStep: 1,
 		value: 1,
 		showButtons: false,
-		slide: function(e) {setTimeout(function() {toolbarChanged();},50)},
-		change: function(e) {setTimeout(function() {toolbarChanged();},50)}
+		slide: function(e) {period = e.item.text();setTimeout(function() {toolbarChanged();},100)},
+		change: function(e) {period = e.item.text();setTimeout(function() {toolbarChanged();},100)}
 	}).data("kendoSlider");
 
 	var sliderFilterPeriod = $("#pcFilterPeriodSlider").kendoSlider(
@@ -375,12 +408,16 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var dropDownVisual = $("#pcAnalyticsVisual").kendoDropDownList(
 	{
 		animation: false,
-		dataSource: ["Sunburst","Treemap","Area","Area Stacked","Area 100%", "Columns","Columns Stacked","Columns 100%", "Lines","Lines Stacked","Lines 100%"],
+		dataSource: ["Sunburst","Treemap","Area","Area Stacked","Area 100%", "Columns Stacked","Columns 100%", "Lines","Lines Stacked","Lines 100%"],
 		value: "Sunburst",
 		change: function(e) {kendo.ui.progress($("#loading"), true); setTimeout(function() {toolbarChanged();},100)}
 	}).data("kendoDropDownList");
 	
-	
+	var sliderFilterPeriodPlay = $("#pcDownload").kendoButton(
+	{
+		click: function(e) {alert("Feature not yet implemented");}
+	}).data("kendoButton");
+
 	tabStripControls.select(0);    
 		
 	//MakePivot(jsonData);
@@ -485,6 +522,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		{
 			initializeBreadcrumbTrail();
 			d3.select("#analyticsChart").select("svg").remove();
+			d3.select("#analyticsChartContainer").select("svg").remove();
 			if (visual=="Sunburst")
 				MakeSunburst(jsonDataFiltered);
 			else if (visual=="Treemap")
@@ -495,8 +533,6 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				MakeChart(jsonDataFiltered,"area","normal");
 			else if (visual=="Area 100%")
 				MakeChart(jsonDataFiltered,"area","100%");
-			else if (visual=="Columns")
-				MakeChart(jsonDataFiltered,"column","none");
 			else if (visual=="Columns Stacked")
 				MakeChart(jsonDataFiltered,"column","normal");
 			else if (visual=="Columns 100%")
@@ -546,6 +582,8 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		var segment = "Brand";
 		if (nesting.length>0)
 			segment = nesting[0];
+			
+
 	/*	
 		var jsonData3 = _.chain(jsonData)
 		.groupBy(segment)
@@ -587,14 +625,19 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			seriesData.push(data); //.push(data);
 		}
 	*/
+	
+		var minPeriod = period;// dropDownFilterPeriod.value(); //"2012-06";
 		delete gDataSource;
 		gDataSource = new kendo.data.DataSource({
 		  data: jsonData, //seriesData, 
 		  //group: [{ field: "Name", aggregates: [{field: kpi, aggregate: "sum"}]}],
 		  group: [{ field: segment, aggregates: [{field: kpi, aggregate: "sum"}]}],
 		  sort: [{ field: "Period", dir: "asc"}],
+		  filter: { field: "Period", operator: "gte", value: minPeriod }
 		});
 
+		
+		var tooltipObj = {visible: true, template: "#= series.name # #= category #: #= parseInt(value).toLocaleString() # "+kpi+" #= kendo.format('{0:P}', percentage)#"}; //template: "#= kendo.format('{0:P}', percentage)#"
 		var chartStackObj = false;
 		var valueAxisObj = {line: {visible: false},majorGridLines: {visible: false}, minorGridLines: {visible: false},labels: {format: "{0:n0}"}};
 		if (chartStack=="normal")
@@ -605,9 +648,16 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		{
 			chartStackObj = { type: "100%" };
 			valueAxisObj = {line: {visible: false},minorGridLines: {visible: false},labels: {}, min: 0, max: 1};
+			//tooltipObj = {visible: true, template: "#= series.name #: #= kendo.format('{0:P}', percentage)#"};
 		}
 		
-		$("#analyticsChart").kendoChart({
+		$("#analyticsChartContainer").kendoChart({
+			chartArea: {
+				border: {width: 0}
+			},
+			plotArea: {
+				border: {width: 0}
+			},
 			legend: {
 				visible: false,
 				position: "bottom"
@@ -619,26 +669,25 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				field: kpi,
 				categoryField: "Period",
 				aggregate: "sum",
-				line: {style: "smooth"}
+				line: {style: "smooth"},
+				connectors:{width: 4,color: "red"},
+				labels: {visible: false},
 			}],
 			
 			valueAxis: valueAxisObj,
 			categoryAxis:{
 				labels: {rotation: 90},
 				majorGridLines: {visible: false},
-				majorTicks: {visible: false}},
-				
-			tooltip: {
-				visible: true,
-				//format: "{0:n0}",
-				template: "#= series.name #: #= parseInt(value).toLocaleString() #",
-			},
+				majorTicks: {visible: false}
+				},
+											
+			tooltip: tooltipObj,
 			dataBound: onDb
 
 		});
 		function onDb()
 		{
-		var chart = $("#analyticsChart").data("kendoChart");
+		var chart = $("#analyticsChartContainer").data("kendoChart");
 		var numSeries = chart.options.series.length;
 		for (var i=0;i<numSeries; i++)  
 			chart.options.series[i].color = color(chart.options.series[i].name); 
@@ -658,9 +707,12 @@ function GFK_NEO_RUN(theDataType, theDataID)
 
 		var totalMarket = d3.sum(jsonDataTreemap, function(d) { return d[kpi]; });
 		
-		var width = 600; //$("[view_id='panelAnalytics']").innerWidth();
-			var height = 400; //$("[view_id='panelAnalytics']").innerHeight()-30;	
-			var radius = Math.min(width, height) / 2;
+		var width = $("#analyticsChartContainer").innerWidth();
+		var height = 600; //width/2;	$("#analyticsChartContainer").innerHeigth(); 
+
+		//var width = $("#analyticsChart").innerWidth() - 10;
+		//var height = $(window).height() - 200; //	$("#analyticsChart").innerHeight() - 10;	
+		var radius = Math.min(width, height) / 2;
 
 			var json2 = d3.nest();	
 			nesting.forEach(function(key) {
@@ -695,7 +747,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			.ratio(height / width * 0.5 * (1 + Math.sqrt(5)))
 			.round(false);
 
-		var svg = d3.select("#analyticsChart").append("svg")
+		var svg = d3.select("#analyticsChartContainer").append("svg")
 			.attr("width", width + margin.left + margin.right)
 			.attr("height", height + margin.bottom + margin.top)
 			.style("margin-left", -margin.left + "px")
@@ -791,8 +843,8 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				return d._children; 
 			})
 			.classed("children", true)
-			.on("click", transition);
-
+			.on("click", transition)
+			.on("contextmenu", contextmenu);
 			
 		g.selectAll(".child")
 			.data(function(d)
@@ -815,33 +867,63 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		g.append("rect")
 		   .attr("class", "tree_parent")
 			.style("fill", function(d) {return d.name == 'tree' ? '#fff' : color(d.name); })
-			.on("mouseover", function(d) 
-					{
-					d3.select(this).attr("opacity",0.3);
-					var sequenceArray = getAncestors(d);
-					var percentage = (100 * d.value / totalMarket).toPrecision(3);
-
-					var theString = kpi + ": " + parseInt( d.value ).toLocaleString() + " Abs. Share: " + percentage + "%";
-					updateBreadcrumbs(sequenceArray, theString);
-				})
-			.on("mouseleave", function(d)
-				{
-					d3.select(this).attr("opacity",1.0);
-							  // Hide the breadcrumb trail
-					d3.select("#trail")
-						  .style("Visibility", "hidden");
-
-				})
-		   .call(rect)
+			.on("mouseover", mouseoverTree)
+			.on("mouseleave", mouseleaveTree)
+			.on("contextmenu", contextmenu)
+			.call(rect)
 		  .append("title")
 			.text(function(d) { return formatNumber(d.value); });
 
 		g.append("text")
 		   .attr("class", "tree_text")
 		   .attr("dy", ".75em")
+			.on("mouseover", mouseoverTree)
+			.on("mouseleave", mouseleaveTree)
+			.on("contextmenu", contextmenu)
 			.text(function(d) { return d.name; })
 			.call(text);
 
+		function contextmenu(d)
+		{	
+			d3.event.preventDefault();
+			//open link in Window
+			var theSearch = "";
+			var sequenceArray = getAncestors(d);
+			sequenceArray.forEach(function(entry)
+			{
+				theSearch += entry.name + " ";
+			});
+			
+			theLinkTarget='http://www.bing.com/search?q=' +theSearch;
+			theLinkTarget = encodeURI(theLinkTarget);
+			
+			$("<div id='firstWindow' />").appendTo("#analyticsBreadcrump").kendoWindow(
+			{
+			    draggable: true, resizable: true, width: "800px",
+				height: "600px", title: "Gfk NEO Search",
+				scrollable: false,
+				content: theLinkTarget, modal: false, actions: ["Minimize", "Maximize", "Close"]
+			});
+		}
+			
+		function mouseoverTree(d)
+		{
+			d3.select(this).attr("opacity",0.3);
+			var sequenceArray = getAncestors(d);
+			var percentage = (100 * d.value / totalMarket).toPrecision(3);
+
+			var theString = kpi + ": " + parseInt( d.value ).toLocaleString() + " Abs. Share: " + percentage + "%";
+			updateBreadcrumbs(sequenceArray, theString);
+		}		
+
+		function mouseleaveTree(d)
+		{
+			d3.select(this).attr("opacity",1.0);
+					  // Hide the breadcrumb trail
+			d3.select("#trail")
+				  .style("Visibility", "hidden");
+		}
+		
 		function transition(d) {
 		  if (transitioning || !d) return;
 		  transitioning = true;
@@ -905,8 +987,8 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		jsonDataSunburst = jsonData; //JSON.parse(JSON.stringify(jsonData)); 
 		kendo.ui.progress($("#loading"), false);
 
-		var width = 800; //$("[view_id='panelAnalytics']").innerWidth();
-		var height = 500; //$("[view_id='panelAnalytics']").innerHeight()-60;	
+		var width = 900; //$("#analyticsChart").innerWidth() - 10;
+		var height = 600; //width/2;	
 		var radius = Math.min(width, height) / 2;
 
 		var json2 = d3.nest();	
@@ -999,6 +1081,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				//if (d.outerRadius < 1) text = "";
 				return text;
 			})	  
+			
 			.attr("text-anchor", function(d) 
 				{
 					if (d.depth==0) return "middle";
@@ -1013,13 +1096,15 @@ function GFK_NEO_RUN(theDataType, theDataID)
 					rotate = angle + (multiline ? -.5 : 0);
 				return "rotate(" + rotate + ")translate(" + (y(d.y) + padding) + ")rotate(" + (angle > 90 ? -180 : 0) + ")";
 			}) 	  
-			.on("click", click);
+			.on("click", click)
+			.on("contextmenu", contextmenu);
+
 				
 
 		function contextmenu(d)
 		{	
-		d3.event.preventDefault();
-			//open link in iframe
+			d3.event.preventDefault();
+			//open link in Window
 			var theSearch = "";
 			var sequenceArray = getAncestors(d);
 			sequenceArray.forEach(function(entry)
@@ -1029,8 +1114,14 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			
 			theLinkTarget='http://www.bing.com/search?q=' +theSearch;
 			theLinkTarget = encodeURI(theLinkTarget);
-			$$("D3SunburstIFrame").load(theLinkTarget);
 			
+			$("<div id='firstWindow' />").appendTo("#analyticsBreadcrump").kendoWindow(
+			{
+			    draggable: true, resizable: true, width: "800px",
+				height: "600px", title: "Gfk NEO Search",
+				scrollable: false,
+				content: theLinkTarget, modal: false, actions: ["Minimize", "Maximize", "Close"]
+			});
 		}
 
 		function click(d)

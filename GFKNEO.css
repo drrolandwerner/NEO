@@ -11,9 +11,59 @@
 
 .panelControls
 {
-	height: 70px;
+	height: 80px;
 	font: 12px sans-serif;
 	cursor: pointer;
+}
+
+.splitterAnalyticsVertical
+{
+	//height: 2000px;
+	//width: 100%;
+}
+
+.splitterAnalyticsHorizontal
+{
+	//height: 2000px;
+	//width: 700px;
+}
+
+.panelAnalytics
+{
+	height: 85vh;
+	width: 100%;
+	font: 12px sans-serif;
+	cursor: pointer;
+}
+.analyticsBreadcrump
+{
+	height: 30px;
+	width: 100%;
+	margin: 4px;
+	font: 12px sans-serif;
+	cursor: pointer;
+}
+
+.analyticsChart
+{
+	margin-left: auto;
+    margin-right: auto;
+	width: 800px;
+	margin: 4px;
+	font: 12px sans-serif;
+	cursor: pointer;
+}
+
+.halfcenter {
+    margin-left: 25%;
+    //background-color: #b0e046;
+}
+
+.center {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    //background-color: #b0e0e6;
 }
 
 .pcMultiSelect
@@ -25,7 +75,7 @@
 
 .pcDrop
 {
-	height: 25px;
+//	height: 25px;
 	margin: 0 4px 0 4px;
 	font: 12px sans-serif;
 	cursor: pointer;
@@ -33,28 +83,15 @@
 
 .pcSlider
 {
-	
 	top: 10px;
-	margin: 0 4px 0 4px;
-	padding: 0px;
-	height: 25px;
-	font: 12px sans-serif;
-	cursor: pointer;
-}
-
-#pcAnalytics
-{
-	height: 25px;
-	font: 12px sans-serif;
+	margin: 0px 4px 0 4px;
 	cursor: pointer;
 }
 
 
-.pane-content {
-	padding: 0 10px;
-}
+
     
-		path {
+	path {
 	  stroke: #000;
 	  stroke-width: 1.5;
 	  cursor: pointer;
