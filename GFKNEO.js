@@ -721,8 +721,6 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		var width = $("#analyticsChartContainer").innerWidth();
 		var height = 600; //width/2;	$("#analyticsChartContainer").innerHeigth(); 
 
-		//var width = $("#analyticsChart").innerWidth() - 10;
-		//var height = $(window).height() - 200; //	$("#analyticsChart").innerHeight() - 10;	
 		var radius = Math.min(width, height) / 2;
 
 			var json2 = d3.nest();	
@@ -736,9 +734,11 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			jsonDataTreemap = json2.entries(jsonDataTreemap);
 
 
+			
 	  // Change the key names and children values from D3.nest
 		jsonDataTreemap = reSortRoot({key: "Market", values: jsonDataTreemap });	
-		
+	
+	
 		var margin = {top: 20, right: 0, bottom: 0, left: 0},
 		formatNumber = d3.format(",d"),
 		transitioning;
@@ -846,12 +846,13 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			.data(d._children)
 			.style("fill", function(d) {
 			  return d.name == 'tree' ? '#fff' : color(d.name); })
-
 			.enter().append("g");
 				
 		g.filter(function(d)
 			{
-				return d._children; 
+				if (d.area >= minShare/100)
+					return d._children;
+				else return null;
 			})
 			.classed("children", true)
 			.on("click", transition)
@@ -871,7 +872,9 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			.attr("class", "tree_child")
 			.filter(function(d)
 			{
-				return d._children || [d]; 
+				if (d.area >= minShare/100)
+					return d._children || [d];
+				else return null;
 			})
 			.call(rect);
 
