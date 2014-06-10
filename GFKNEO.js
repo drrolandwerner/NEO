@@ -393,8 +393,15 @@ function GFK_NEO_RUN(theDataType, theDataID)
 
 	var sliderFilterPeriodPlay = $("#pcFilterPeriodPlay").kendoButton(
 	{
-		icon: "arrow-e",
-		click: function(e) {gPlay = !gPlay; playPeriods(gPlay);}
+		icon: "seek-e",
+		click: function(e) {
+			gPlay = !gPlay; 
+			if (gPlay)
+				$("#pcFilterPeriodPlay").find(".k-icon").removeClass("k-i-seek-e").addClass("k-i-close");
+			else
+				$("#pcFilterPeriodPlay").find(".k-icon").removeClass("k-i-close").addClass("k-i-seek-e");
+			playPeriods(gPlay);
+		}
 	}).data("kendoButton");
 	
 	var dropDownKPI = $("#pcAnalyticsKPI").kendoDropDownList(
@@ -413,7 +420,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		change: function(e) {kendo.ui.progress($("#loading"), true); setTimeout(function() {toolbarChanged();},100)}
 	}).data("kendoDropDownList");
 	
-	var sliderFilterPeriodPlay = $("#pcDownload").kendoButton(
+	var downloadButton = $("#pcDownload").kendoButton(
 	{
 		click: function(e) {alert("Feature not yet implemented");}
 	}).data("kendoButton");
@@ -1091,7 +1098,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				var dummyText = "";
 				if (d.depth==0) dummyText = "100%";
 				text = d.name || dummyText;
-				if (text.length>10) text=text.substr(0,10)+"."; 
+				if (text.length>10 && d.depth>0) text=text.substr(0,10)+"."; 
 				//if (d.outerRadius < 1) text = "";
 				return text;
 			})	  
@@ -1233,7 +1240,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			var percentageStringLong =  percentageString + kpi + ": " + parseInt( d.value ).toLocaleString();
 			}
 			else
-				var percentageStringLong = "Total Market = 100%"; 
+				var percentageStringLong = "Market: " + parseInt(gTotalMarketFiltered[period]).toLocaleString() +" "+ kpi + " 100%"; 
 			
 			var sequenceArray = getAncestors(d);
 			updateBreadcrumbs(sequenceArray, percentageStringLong);
