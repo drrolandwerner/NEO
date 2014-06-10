@@ -72,8 +72,8 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var gSunburst = new Object();
 	var gDataSource = new Object();
 	
-	var gTotalMarket = 0;
-	var gTotalMarketFiltered = 0;
+	var gTotalMarket = new Object();
+	var gTotalMarketFiltered = new Object();
 	
 	var segment1Val = 2;
 	var segment2Val = 1;
@@ -373,8 +373,8 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		largeStep: 1,
 		value: 1,
 		showButtons: false,
-		slide: function(e) {period = e.item.text();setTimeout(function() {toolbarChanged();},100)},
-		change: function(e) {period = e.item.text();setTimeout(function() {toolbarChanged();},100)}
+		slide: function(e) {toolbarChanged();},
+		change: function(e) {toolbarChanged();}
 	}).data("kendoSlider");
 
 	var sliderFilterPeriod = $("#pcFilterPeriodSlider").kendoSlider(
@@ -408,7 +408,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var dropDownVisual = $("#pcAnalyticsVisual").kendoDropDownList(
 	{
 		animation: false,
-		dataSource: ["Sunburst","Treemap","Area","Area Stacked","Area 100%", "Columns Stacked","Columns 100%", "Lines","Lines Stacked","Lines 100%"],
+		dataSource: ["Sunburst","Treemap","Area","Area Stacked","Area 100%", "Columns Stacked","Columns 100%", "Lines", "Lines Stacked"],
 		value: "Sunburst",
 		change: function(e) {kendo.ui.progress($("#loading"), true); setTimeout(function() {toolbarChanged();},100)}
 	}).data("kendoDropDownList");
@@ -488,23 +488,27 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				return record.Period == period && record.Country == country;
 			});
 		
-		gTotalMarket = 0;
+		delete gTotalMarket;
+		delete gTotalMarketFiltered;
+		gTotalMarket = new Object();
+		gTotalMarketFiltered = new Object();
+
+		for (var i=0; i<filterPeriod.length; i++)
+		{
+			gTotalMarket[filterPeriod[i]] = 0;
+			gTotalMarketFiltered[filterPeriod[i]] = 0;
+		}
+		
 		for( var j = 0; j < jsonData.length; j++ )
 		{
-			gTotalMarket +=  jsonData[j][kpi];
+			gTotalMarket[jsonData[j]["Period"]] +=  jsonData[j][kpi];
 		}
 		
-		gTotalMarketFiltered = 0;
 		for( var k = 0; k < jsonDataFiltered.length; k++ )
 		{
-			gTotalMarketFiltered +=  jsonDataFiltered[k][kpi];
+			gTotalMarketFiltered[jsonDataFiltered[k]["Period"]] +=  jsonDataFiltered[k][kpi];
 		}
 		
-		//alert ("Market: "+parseInt(gTotalMarket)+" Filtered: "+parseInt(gTotalMarketFiltered));
-		
-		//$$("numRecords").setValue(jsonDataFiltered.length + "/" + jsonData.length);
-
-		//$$("minsharepercentage").setValue((minShare)+"%");
 		nesting = multiSelectSegmentation.value();
 		var json2 = d3.nest();
 
@@ -541,8 +545,6 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				MakeChart(jsonDataFiltered,"line","none");
 			else if (visual=="Lines Stacked")
 				MakeChart(jsonDataFiltered,"line","normal");
-			else if (visual=="Lines 100%")
-				MakeChart(jsonDataFiltered,"Line","100%");
 		}
 	}
 
@@ -578,68 +580,72 @@ function GFK_NEO_RUN(theDataType, theDataID)
 
 	function MakeChart(jsonData,chartType,chartStack)
 	{
-
+		//use 1st level of segmentation
 		var segment = "Brand";
-		if (nesting.length>0)
-			segment = nesting[0];
-			
-
-	/*	
-		var jsonData3 = _.chain(jsonData)
+		if (nesting.length>0) segment = nesting[0];
+		
+		
+		//reduce datasets to 1st level of segmentation
+		var jsonDataReduced = _.chain(jsonData)
 		.groupBy(segment)
 		.map(function(value, key) {
 			return _.chain(value)
 				.groupBy("Period")
 				.map(function(value1, period) {
-					return {
-						Name: key,
-						Kpi: sum(_.pluck(value1, kpi)),
-						Units: sum(_.pluck(value1, "Units")),
-						Value: sum(_.pluck(value1, "Value")),
-						Period: period
-					}
+					var data = {					
+						'Kpi': sum(_.pluck(value1, kpi)),
+						'Units': sum(_.pluck(value1, "Units")),
+						'Value': sum(_.pluck(value1, "Value")),
+						'Period': period
+					};
+					data[segment] = key;
+					return data;
 				})
 				.value();
 		})
 		.value();
 		
 
-		function sum(numbers) {
-		return _.reduce(numbers, function(result, current) {
-			return result + parseFloat(current);
-		}, 0);
+		function sum(numbers)
+		{
+			return _.reduce(numbers, function(result, current)
+			{
+				return result + parseFloat(current);
+			}, 0);
 		}
 		
-		//var categories = filterPeriod;
 		var seriesData = [];
-		for (i=0;i<jsonData3.length;i++)
+		for (i=0;i<jsonDataReduced.length;i++)
 		{
-			var objectArray = jsonData3[i];
+			var objectArray = jsonDataReduced[i];
 			var data = new Array();
 			var name = "";
+			//var periodTotal
 			for (k=0;k<objectArray.length;k++)
 			{
-				periodSplit = objectArray[k].Period.split("-");
-				seriesData.push({Name: objectArray[k].Name, Period: new Date(periodSplit[0],periodSplit[1]), Units: objectArray[k].Units, Value: objectArray[k].Value});
+				//translate segment into Others if market share < below min share 
+				var value1 = objectArray[k].Kpi;
+				var value2 = gTotalMarket[objectArray[k].Period];
+				if ( value1 / value2  < minShare/100)
+					objectArray[k][segment] = " Other";
+				seriesData.push(objectArray[k]);
 			}
-			seriesData.push(data); //.push(data);
 		}
-	*/
 	
-		var minPeriod = period;// dropDownFilterPeriod.value(); //"2012-06";
+	
+		var minPeriod = period; 
 		delete gDataSource;
 		gDataSource = new kendo.data.DataSource({
-		  data: jsonData, //seriesData, 
-		  //group: [{ field: "Name", aggregates: [{field: kpi, aggregate: "sum"}]}],
+		  data: seriesData, //jsonData
 		  group: [{ field: segment, aggregates: [{field: kpi, aggregate: "sum"}]}],
 		  sort: [{ field: "Period", dir: "asc"}],
 		  filter: { field: "Period", operator: "gte", value: minPeriod }
 		});
 
 		
-		var tooltipObj = {visible: true, template: "#= series.name # #= category #: #= parseInt(value).toLocaleString() # "+kpi+" #= kendo.format('{0:P}', percentage)#"}; //template: "#= kendo.format('{0:P}', percentage)#"
+		var tooltipObj = {visible: true, template: segment + " #= series.name #<br/>#= category #<br/>#= parseInt(value).toLocaleString() # "+kpi+"<br/>#= kendo.format('{0:P}', percentage)#"}; //template: "#= kendo.format('{0:P}', percentage)#"};
 		var chartStackObj = false;
-		var valueAxisObj = {line: {visible: false},majorGridLines: {visible: false}, minorGridLines: {visible: false},labels: {format: "{0:n0}"}};
+		var valueAxisObj = {line: {visible: false},majorGridLines: {visible: false}, minorGridLines: {visible: false},labels: {format: "{0:n0}"},crosshair: {color: "green",width: 2,visible: false}};
 		if (chartStack=="normal")
 		{
 			chartStackObj = true;
@@ -647,13 +653,15 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		else if (chartStack=="100%")
 		{
 			chartStackObj = { type: "100%" };
-			valueAxisObj = {line: {visible: false},minorGridLines: {visible: false},labels: {}, min: 0, max: 1};
-			//tooltipObj = {visible: true, template: "#= series.name #: #= kendo.format('{0:P}', percentage)#"};
+			valueAxisObj = {line: {visible: false},minorGridLines: {visible: false},labels: {}, min: 0, max: 1,crosshair: {color: "green",width: 2,visible: false}};
 		}
+		
+			   
 		
 		$("#analyticsChartContainer").kendoChart({
 			chartArea: {
-				border: {width: 0}
+				border: {width: 0},
+				opacity: 0
 			},
 			plotArea: {
 				border: {width: 0}
@@ -669,16 +677,19 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				field: kpi,
 				categoryField: "Period",
 				aggregate: "sum",
+				style: "smooth",
 				line: {style: "smooth"},
-				connectors:{width: 4,color: "red"},
+				//connectors:{width: 4,color: "red"},
 				labels: {visible: false},
+				markers: { visible: false}
 			}],
 			
 			valueAxis: valueAxisObj,
 			categoryAxis:{
 				labels: {rotation: 90},
 				majorGridLines: {visible: false},
-				majorTicks: {visible: false}
+				majorTicks: {visible: false},
+				crosshair: {color: "green",width: 2,visible: false}
 				},
 											
 			tooltip: tooltipObj,
