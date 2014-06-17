@@ -9,7 +9,7 @@
  }; 
  
  
-function GFK_NEO(theDataType, theDataID)
+function GFK_NEO()
 {
 	$(document).ready(function()
 	{
@@ -23,9 +23,16 @@ function GFK_NEO(theDataType, theDataID)
 		var file_css_kendo_4 = "http://cdn.kendostatic.com/2014.1.318/styles/kendo.dataviz.default.min.css";
 
 		//remove following lines
-		//file_d3 = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\d3.min.js";
-		//file_underscore = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\underscore-min.js";
-		//file_css_neo = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\GFKNEO.css";
+		/*
+		file_d3 = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\d3.min.js";
+		file_underscore = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\underscore-min.js";
+		file_css_neo = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\GFKNEO.css";
+		file_kendo = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\kendo.all.min.js";
+		var file_css_kendo_1 = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\kendo.common.min.css";
+		var file_css_kendo_2 = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\kendo.default.min.css";
+		var file_css_kendo_3 = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\kendo.dataviz.min.css";
+		var file_css_kendo_4 = "file://D:\\rdwern\\Documents\\GitHub\\NEO\\kendo.dataviz.default.min.css";
+		*/
 		// remove previous lines
 		
 		// Load D3.js library
@@ -42,7 +49,7 @@ function GFK_NEO(theDataType, theDataID)
 					loadCSS(file_css_kendo_2);
 					loadCSS(file_css_kendo_3);
 					loadCSS(file_css_kendo_4);
-					GFK_NEO_RUN(theDataType, theDataID);
+					GFK_NEO_RUN();
 				})
 			})
 		})
@@ -52,13 +59,15 @@ function GFK_NEO(theDataType, theDataID)
 
 }
   
-function GFK_NEO_RUN(theDataType, theDataID) 
+function GFK_NEO_RUN() 
 {	
 	// Hide all COGNOS lists, COGNOS crosstabs, HTML elements with data
-	$(".ls").hide();
-	$(".xt").hide();
-	$("."+theDataID).hide();
-	
+	//$(".ls").hide();
+	//$(".xt").hide();
+	$("#tsvdata").hide();
+	$("#jsondata").hide();
+	//kendo.ui.progress($("#loading"), true);
+
 	var color = d3.scale.category20c();
 	var jsonHierarchy = new Object();
 	var tableData = "[";
@@ -75,6 +84,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var gTotalMarket = new Object();
 	var gTotalMarketFiltered = new Object();
 	
+	/*
 	var segment1Val = 2;
 	var segment2Val = 1;
 	var segment3Val = 1;
@@ -91,6 +101,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var filter1 = "";
 	var filter2 = "";
 	var filter3 = "";
+	*/
 	
 	var gPlay = false;
 	
@@ -100,12 +111,54 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var period = "2012-12";
 	var brand = "all";
 	var kpi = "Units";
+	var aggregation = "Total";
 	var kpiVal = 1;
 	var minShare = 10;
 	var	nesting = new Array();;
 	var gTimer;
 	
-	if (theDataType=="html_ls") // COGNOS list inside HTML
+	// identify what data is available for analysis
+	tsvData = $("#tsvdata"); // embedded tab separated data in HTML file	
+	jsonData = $("#jsondata"); // embedded JSON data in HTML file	
+	crosstabData = $(".xt"); // embedded Cognos Crosstab in HTML file
+	listData = $(".ls"); // embedded Cognos List in HTML file
+	
+	if (! $.isEmptyObject(tsvData))
+	{
+		function csvJSON(csv){
+			var lines=csv.split("\n");
+			var result = [];
+			var headers=lines[0].split("\t");
+			for(var i=1;i<lines.length-1;i++){
+			var obj = {};
+			var currentline=lines[i].split("\t");
+			for(var j=0;j<headers.length;j++)
+			{
+				var field = currentline[j];
+				if (! $.isEmptyObject(field))
+				{
+					field = field.replace(/"/g, '');
+					field = field.replace(/\\/g, '');
+					obj[headers[j]] = field;
+				}
+			}
+				if (obj.Country=="Germany")
+					result.push(obj);
+			}
+			return result; 
+		}
+		var theTSVData = tsvData.text(); //$("."+theDataID).text();
+		jsonData = csvJSON( theTSVData );
+		tsvData.remove();
+	}
+	else if (! $.isEmptyObject(jsonData))
+	{
+		d3.json(theDataID, function(jsonData) 
+		{
+			alert("JSON data import not yet implemented");
+		})
+	}
+	else if (! $.isEmptyObject(listData)) // COGNOS list inside HTML
 	{
 		var json = '{';
 			var row = 0;
@@ -148,40 +201,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		tableData += "]";
 		jsonData = JSON.parse( tableData );
 	}
-	else if (theDataType=="html_csv")
-	{
-		function csvJSON(csv){
-			var lines=csv.split("\n");
-			var result = [];
-			var headers=lines[0].split("\t");
-			for(var i=1;i<lines.length-1;i++){
-			var obj = {};
-			var currentline=lines[i].split("\t");
-			for(var j=0;j<headers.length;j++)
-			{
-				var field = currentline[j];
-				if (! $.isEmptyObject(field))
-				{
-					field = field.replace(/"/g, '');
-					field = field.replace(/\\/g, '');
-					obj[headers[j]] = field;
-				}
-			}
-				if (obj.Country=="Germany")
-					result.push(obj);
-			}
-			return result; 
-		}
-		var theCSVData = $("."+theDataID).text();
-		jsonData = csvJSON( theCSVData );
-		$("."+theDataID).remove();
-	}
-	else if (theDataType=="file_json")
-	{
-		d3.json(theDataID, function(jsonData) 
-		{
-		})
-	}
+	
 	var month = new Object();
 	month['January'] = '01';
 	month['February'] = '02';
@@ -205,6 +225,10 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			jsonData[k]['Period'] = newPeriod ;
 			jsonData[k]['Value'] = parseFloat(jsonData[k]['Value']);
 			jsonData[k]['Units'] = parseFloat(jsonData[k]['Units']);
+			jsonData[k]['Price'] = parseFloat(jsonData[k]['Value']/Math.max(jsonData[k]['Units'],1));
+			// Random data generation, to be removed
+			jsonData[k]['Growth'] = Math.floor(Math.random() * (10 - -10) + -10);
+			jsonData[k]['Stores'] = Math.floor(Math.random() * 10000);			
 		}
 		else
 			delete jsonData[k];
@@ -213,26 +237,55 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var numRecords = jsonData.length;
 	
 	
-	var filterPeriod = new Array();
-	var periods = _.keys(_.countBy(jsonData, function(jsonData) { return jsonData.Period; }));		
-	periods.sort();
-	for (var index = 0; index < periods.length; ++index)
-		filterPeriod.push(periods[index]);
+	  var jsonBrands = d3.nest()
+      .key(function(d) { return d.Brand; })
+      .entries(jsonData);
+ 
+	  var jsonBrandPeriod = d3.nest()
+      .key(function(d) { return d.Brand + "/"+ d.Period; })
+      .entries(jsonData);
+	
+	
+	  // Compute the overall rate for all data.
+	  var overallPrice = d3.sum(jsonData, function(d) {return d.Value;}) / d3.sum(jsonData,function(d) {return d.Value;});
 
-	var filterCountry = new Array();
-	var countries = _.keys(_.countBy(jsonData, function(jsonData) { return jsonData.Country; }));
-	countries.sort();
-	for (var index = 0; index < countries.length; ++index)
-		filterCountry.push(countries[index]);
+	  // Compute the overall price by brand.
+	  jsonBrands.forEach(function(d) {
+		d.Price = d3.sum(d.values, function(d) {return d.Value;}) / d3.sum(d.values, function(d) {return d.Value;});
+	  });
+
+	  // Sort brands by ascending overall price.
+	  jsonBrands.sort(function(a, b) {
+		return a.Price - b.price;
+	  });
+
+	  // Compute the price for each product.
+	  jsonData.forEach(function(d) {
+		d.Price = d.Value / Math.max(d.Units,1);
+	  });
+	
+	
+	
+
 		
-	var filterBrand = new Array();
+
 	
-	var brands = _.keys(_.countBy(jsonData, function(jsonData) { return jsonData.Brand; }));
-	brands.sort();
-	for (var index = 0; index < brands.length; ++index)
-		filterBrand.push(brands[index]);
+	// Build arrays with all members (non KPIS)	
+	var segmentFilters = new Object();
+	for (var property in jsonData[0])
+	{
+		var kpiTestArray = ["Units","Value","Price", "Growth", "Stores"];
+		if (kpiTestArray.indexOf(property)<0)
+		{
+			segmentFilters[property] = new Array();
+			var segment = _.keys(_.countBy(jsonData, function(jsonData) { return jsonData[property]; }));
+			segment.sort();
+			for (var index = 0; index < segment.length; ++index)
+				segmentFilters[property].push(segment[index]);
+		}
+	}
 	
-	var KPIs = new Array("Units","Value");
+	var KPIs = new Array("Units","Value","Price", "Growth", "Stores");
 	
 	featureKeys = new Array();
 	countKeys = 1;
@@ -245,7 +298,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		}
 	}
 
-	segment1 = featureKeys[segment1Val-1];
+	//segment1 = featureKeys[segment1Val-1];
 
 	
 	var template = kendo.template('<div id="panelBar"></div>');
@@ -296,18 +349,18 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		{
 			text: "Analytics",
 			 encoded: false,                            
-			content: "<div>KPI: <div id='pcAnalyticsKPI'></div> Visualization: <div id='pcAnalyticsVisual' class='pcDrop'></div></div>"
-		},
-		{
-			text: "Brands",
-			encoded: false,                            
-			content: "<div id='pcBrands'  class='pcMultiSelect'></div>"
+			content: "KPI: <div id='pcAnalyticsKPI' class='pcDrop'></div><div id='pcAnalyticsKPIAggregation' class='pcDrop'></div> Visualization: <div id='pcAnalyticsVisual' class='pcDrop'></div>"
 		},
 		{
 			text: "Segments",
 			encoded: false,                            
 			content: "<div id='pcSegments'  class='pcMultiSelect'></div>"
 		},
+		{
+			text: "Groups",
+			encoded: false,                            
+			content: "<div id='pcSegment1'  class='pcMultiSelect'></div>"
+		},		
 		{
 			text: "Filters",
 			 encoded: false,                            
@@ -320,18 +373,18 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		},
 
 	]);
-	
-	
-	var multiSelectBrands = $("#pcBrands").kendoMultiSelect(
+			
+	var multiSelectGrouping1 = $("#pcSegment1").kendoMultiSelect(
 	{
 		animation: false,
 		multiple: "multiple",
+		maxSelectedItems: 5,
 		placeholder: "click to select specific brands...",
-		dataSource: filterBrand,
+		dataSource: segmentFilters["Brand"],
 		value: [],
 		change: function(e) {setTimeout(function() {toolbarChanged();},50)}
 	}).data("kendoMultiSelect");
-
+	
 	var multiSelectSegmentation = $("#pcSegments").kendoMultiSelect(
 	{
 		animation: false,
@@ -346,16 +399,16 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	var dropDownFilterCountry = $("#pcFilterCountry").kendoDropDownList(
 	{
 		animation: false,
-		dataSource: filterCountry,
-		value: filterCountry[0],
+		dataSource: segmentFilters["Country"], //filterCountry,
+		value: segmentFilters["Country"][0],
 		change: function(e) {toolbarChanged();}
 	}).data("kendoDropDownList");
 
 	var dropDownFilterPeriod = $("#pcFilterPeriod").kendoDropDownList(
 	{
 		animation: false,
-		dataSource: filterPeriod,
-		value: filterPeriod[0],
+		dataSource: segmentFilters["Period"], //filterPeriod,
+		value: segmentFilters["Period"][0],
 		select: function(e)
 		{
 			dataItem = e.item.index();
@@ -377,10 +430,11 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		change: function(e) {toolbarChanged();}
 	}).data("kendoSlider");
 
+	
 	var sliderFilterPeriod = $("#pcFilterPeriodSlider").kendoSlider(
 	{
 		min: 0,
-		max: filterPeriod.length,
+		max: segmentFilters["Period"].length,
 		smallStep: 1,
 		largeStep: 1,
 		value: 1,
@@ -411,11 +465,20 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		value: KPIs[0],
 		change: function(e) {setTimeout(function() {toolbarChanged();},50)}
 	}).data("kendoDropDownList");
+
+	var dropDownKPIAggregation = $("#pcAnalyticsKPIAggregation").kendoDropDownList(
+	{
+		animation: false,
+		dataSource: ["Total","Average", "Count", "Maximum", "Minimum"],
+		value: "Total",
+		change: function(e) {aggregation = e.value; toolbarChanged();}
+	}).data("kendoDropDownList");
+
 	
 	var dropDownVisual = $("#pcAnalyticsVisual").kendoDropDownList(
 	{
 		animation: false,
-		dataSource: ["Sunburst","Treemap","Area","Area Stacked","Area 100%", "Columns Stacked","Columns 100%", "Lines", "Lines Stacked"],
+		dataSource: ["Sunburst","Treemap","Bubble", "Area","Area Stacked","Area 100%", "Columns Stacked","Columns 100%", "Lines", "Lines Stacked"],
 		value: "Sunburst",
 		change: function(e) {kendo.ui.progress($("#loading"), true); setTimeout(function() {toolbarChanged();},100)}
 	}).data("kendoDropDownList");
@@ -429,6 +492,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		
 	//MakePivot(jsonData);
 	MakeBreadcrump();
+	kendo.ui.progress($("#loading"), false);
 	toolbarChanged();
 
 	function playPeriods(play)
@@ -475,10 +539,12 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		country = dropDownFilterCountry.value();
 		minShare = sliderFilterShare.value();
 		kpi = dropDownKPI.value();
-		brands = multiSelectBrands.value();
+		aggregation = dropDownKPIAggregation.value();
+		brands = multiSelectGrouping1.value();
 		visual = dropDownVisual.value();
 		
 		delete jsonDataFiltered;
+		
 		jsonDataFiltered = JSON.parse(JSON.stringify(jsonData)); //clone
 		if (brands.length > 0)
 		{
@@ -489,21 +555,24 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			}
 		}	
 		
+		
+		
 		if (visual=="Sunburst" || visual=="Treemap")
 			jsonDataFiltered = _.filter(jsonDataFiltered, function(record)		
 			{ 
 				return record.Period == period && record.Country == country;
 			});
 		
+		
 		delete gTotalMarket;
 		delete gTotalMarketFiltered;
 		gTotalMarket = new Object();
 		gTotalMarketFiltered = new Object();
 
-		for (var i=0; i<filterPeriod.length; i++)
+		for (var i=0; i<segmentFilters["Period"].length; i++)
 		{
-			gTotalMarket[filterPeriod[i]] = 0;
-			gTotalMarketFiltered[filterPeriod[i]] = 0;
+			gTotalMarket[segmentFilters["Period"][i]] = 0;
+			gTotalMarketFiltered[segmentFilters["Period"][i]] = 0;
 		}
 		
 		for( var j = 0; j < jsonData.length; j++ )
@@ -534,10 +603,16 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			initializeBreadcrumbTrail();
 			d3.select("#analyticsChart").select("svg").remove();
 			d3.select("#analyticsChartContainer").select("svg").remove();
+			d3.select("#kendoChart").remove();
+			
 			if (visual=="Sunburst")
 				MakeSunburst(jsonDataFiltered);
 			else if (visual=="Treemap")
 				MakeTreemap(jsonDataFiltered);
+			else if (visual=="Bubbles")
+				MakeBubbles(jsonDataFiltered);
+			else if (visual=="Voronoi")
+				MakeVoronoi(jsonDataFiltered);
 			else if (visual=="Area")
 				MakeChart(jsonDataFiltered,"area","none");
 			else if (visual=="Area Stacked")
@@ -585,12 +660,23 @@ function GFK_NEO_RUN(theDataType, theDataID)
 
 	}
 
+	
 	function MakeChart(jsonData,chartType,chartStack)
 	{
 		//use 1st level of segmentation
 		var segment = "Brand";
 		if (nesting.length>0) segment = nesting[0];
-		
+	
+		var aggFunction = "sum";
+		if (aggregation=="Total")
+				aggFunction = "sum";
+		else if (aggregation=="Average")
+				aggFunction = "average";
+		else if (aggregation=="Maximum")
+				aggFunction = "max";
+		else if (aggregation=="Minimum")
+				aggFunction = "min";
+	
 		
 		//reduce datasets to 1st level of segmentation
 		var jsonDataReduced = _.chain(jsonData)
@@ -600,9 +686,10 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				.groupBy("Period")
 				.map(function(value1, period) {
 					var data = {					
-						'Kpi': sum(_.pluck(value1, kpi)),
-						'Units': sum(_.pluck(value1, "Units")),
-						'Value': sum(_.pluck(value1, "Value")),
+						'Kpi': aggregate(_.pluck(value1, kpi)),
+						'Units': aggregate(_.pluck(value1, "Units")),
+						'Value': aggregate(_.pluck(value1, "Value")),
+						'Price': aggregate(_.pluck(value1, "Price")),
 						'Period': period
 					};
 					data[segment] = key;
@@ -613,11 +700,27 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		.value();
 		
 
-		function sum(numbers)
+		function aggregate(numbers)
 		{
 			return _.reduce(numbers, function(result, current)
 			{
-				return result + parseFloat(current);
+				if (aggregation=="Total")
+					return result + parseFloat(current);
+				if (aggregation=="Count")
+					return result + 1;
+				else if (aggregation=="Average")
+					return (result+parseFloat(current))/2;
+				else if (aggregation=="Maximum")
+					return Math.max(result,parseFloat(current));
+				else if (aggregation=="Minimum")
+				{
+				if (parseFloat(current) == 0)
+					return result;
+				else
+					return Math.min(result,parseFloat(current));
+				}
+				else	
+					return result + parseFloat(current);
 			}, 0);
 		}
 		
@@ -633,18 +736,18 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				//translate segment into Others if market share < below min share 
 				var value1 = objectArray[k].Kpi;
 				var value2 = gTotalMarket[objectArray[k].Period];
-				if ( value1 / value2  < minShare/100)
-					objectArray[k][segment] = " Other";
+				//if ( aggFunction == "sum" && value1 / value2  < minShare/100) objectArray[k][segment] = " Other";
 				seriesData.push(objectArray[k]);
 			}
 		}
 	
+
 	
 		var minPeriod = period; 
 		delete gDataSource;
 		gDataSource = new kendo.data.DataSource({
 		  data: seriesData, //jsonData
-		  group: [{ field: segment, aggregates: [{field: kpi, aggregate: "sum"}]}],
+		  group: [{ field: segment, aggregates: [{field: kpi, aggregate: aggFunction}]}],	//"average", "count", "max", "min" and "sum".
 		  sort: [{ field: "Period", dir: "asc"}],
 		  filter: { field: "Period", operator: "gte", value: minPeriod }
 		});
@@ -662,10 +765,9 @@ function GFK_NEO_RUN(theDataType, theDataID)
 			chartStackObj = { type: "100%" };
 			valueAxisObj = {line: {visible: false},minorGridLines: {visible: false},labels: {}, min: 0, max: 1,crosshair: {color: "green",width: 2,visible: false}};
 		}
-		
 			   
-		
-		$("#analyticsChartContainer").kendoChart({
+		$("#analyticsChartContainer").append("<div id='kendoChart' class='kendoChart'></div>");
+		gKendoChart = $("#kendoChart").kendoChart({
 			chartArea: {
 				border: {width: 0},
 				opacity: 0
@@ -683,7 +785,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				stack: chartStackObj,
 				field: kpi,
 				categoryField: "Period",
-				aggregate: "sum",
+				aggregate: aggFunction,
 				style: "smooth",
 				line: {style: "smooth"},
 				//connectors:{width: 4,color: "red"},
@@ -705,19 +807,24 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		});
 		function onDb()
 		{
-		var chart = $("#analyticsChartContainer").data("kendoChart");
-		var numSeries = chart.options.series.length;
-		for (var i=0;i<numSeries; i++)  
-			chart.options.series[i].color = color(chart.options.series[i].name); 
-		if (numSeries < 10)
-			chart.options.legend.visible = true;
-		
+			var chart = $("#kendoChart").data("kendoChart");
+			var numSeries = chart.options.series.length;
+			for (var i=0;i<numSeries; i++)  
+				chart.options.series[i].color = color(chart.options.series[i].name); 
+			if (numSeries < 10)
+				chart.options.legend.visible = true;		
 		}
 		kendo.ui.progress($("#loading"), false);
 	} // MakeChart
 	
 
 
+	function MakeBubbles(jsonData)
+	{
+		alert("Bubble diagram not yet implemented. Show Sunburst diagram.");
+		MakeSunburst(jsonData);
+	}
+	
 	function MakeTreemap(jsonData)
 	{
 		jsonDataTreemap = jsonData; //JSON.parse(JSON.stringify(jsonData)); 
@@ -730,15 +837,25 @@ function GFK_NEO_RUN(theDataType, theDataID)
 
 		var radius = Math.min(width, height) / 2;
 
-			var json2 = d3.nest();	
-			nesting.forEach(function(key) {
-				json2.key(function(d) {return d[key]; }).sortKeys(d3.ascending)
-			});
-			json2 = json2.rollup(function(d) 
-				{
-					return {"kpi": d3.sum(d, function(d) {return d[kpi];})}
-				});
-			jsonDataTreemap = json2.entries(jsonDataTreemap);
+		var json2 = d3.nest();	
+		nesting.forEach(function(key) {
+			json2.key(function(d) {return d[key]; }).sortKeys(d3.ascending)
+		});
+
+		json2 = json2.rollup(function(leaves) 
+		{
+			if (aggregation=="Total")
+				return {"kpi": d3.sum(leaves, function(d) {return d[kpi];})};
+			if (aggregation=="Count")
+				return {"kpi": leaves.length};
+			else if (aggregation=="Maximum")
+				return {"kpi": d3.max(leaves, function(d) {return d[kpi];})};
+			else if (aggregation=="Minumum")
+				return {"kpi": d3.min(leaves, function(d) {return d[kpi];})};
+			else if (aggregation=="Average")
+				return {"kpi": d3.mean(leaves, function(d) {return d[kpi];})};
+		});
+		jsonDataTreemap = json2.entries(jsonDataTreemap);
 
 
 			
@@ -1016,13 +1133,21 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		nesting.forEach(function(key) {
 			json2.key(function(d) {return d[key]; }).sortKeys(d3.ascending)
 		});
-		json2 = json2.rollup(function(d) 
+			json2 = json2.rollup(function(leaves) 
 			{
-				return {"kpi": d3.sum(d, function(d) {return d[kpi];})}
+				if (aggregation=="Total")
+					return {"kpi": d3.sum(leaves, function(d) {return d[kpi];})};
+				if (aggregation=="Count")
+					return {"kpi": leaves.length};
+				else if (aggregation=="Maximum")
+					return {"kpi": d3.max(leaves, function(d) {return d[kpi];})};
+				else if (aggregation=="Minumum")
+					return {"kpi": d3.min(leaves, function(d) {return d[kpi];})};
+				else if (aggregation=="Average")
+					return {"kpi": d3.mean(leaves, function(d) {return d[kpi];})};
 			});
+
 		jsonDataSunburst = json2.entries(jsonDataSunburst);
-
-
 		// Change the key names and children values from D3.nest
 		jsonDataSunburst = reSortRoot({key: "Market", values: jsonDataSunburst });	
 		x = d3.scale.linear().range([0, 2 * Math.PI]),
@@ -1167,7 +1292,7 @@ function GFK_NEO_RUN(theDataType, theDataID)
 				  };
 				})
 				.attrTween("transform", function(d) {
-				  var multiline = ((d.name || "").substr(0,20)).split(" ").length > 1;
+				  var multiline = ((d.Product || "").substr(0,20)).split(" ").length > 1;
 				  return function()
 				  {
 					if (d.depth==0) return "";			
@@ -1281,6 +1406,755 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		}
 	} //MakeSunburst
 
+	
+	function MakeVoronoi(jsonData)
+	{
+		jsonDataVoronoi = jsonData;  
+		
+		var segment = "Brand";
+		if (nesting.length>0) segment = nesting[0];
+
+				//reduce datasets to 1st level of segmentation
+		var jsonDataReduced = _.chain(jsonData)
+		.groupBy(segment)
+		.map(function(value, key) {
+			return _.chain(value)
+				.groupBy("Period")
+				.map(function(value1, period) {
+					var data = {					
+						'Kpi': aggregate(_.pluck(value1, kpi)),
+						'Units': aggregate(_.pluck(value1, "Units")),
+						'Value': aggregate(_.pluck(value1, "Value")),
+						'Price': aggregate(_.pluck(value1, "Price")),
+						'Growth': aggregate(_.pluck(value1, "Growth")),
+						'Stores': aggregate(_.pluck(value1, "Stores")),
+						'cx': 20,
+						'cy': 50,
+						'x': 10,
+						'y': 40,						
+						'Period': period
+					};
+					data[segment] = key;
+					return data;
+				})
+				.value();
+		})
+		.value();
+		
+
+		function aggregate(numbers)
+		{
+			return _.reduce(numbers, function(result, current)
+			{
+				if (aggregation=="Total")
+					return result + parseFloat(current);
+				if (aggregation=="Count")
+					return result + 1;
+				else if (aggregation=="Average")
+					return (result+parseFloat(current))/2;
+				else if (aggregation=="Maximum")
+					return Math.max(result,parseFloat(current));
+				else if (aggregation=="Minimum")
+				{
+				if (parseFloat(current) == 0)
+					return result;
+				else
+					return Math.min(result,parseFloat(current));
+				}
+				else	
+					return result + parseFloat(current);
+			}, 0);
+		}
+		
+		var seriesData = [];
+		for (i=0;i<jsonDataReduced.length;i++)
+		{
+			var objectArray = jsonDataReduced[i];
+			var data = new Array();
+			var name = "";
+			for (k=0;k<objectArray.length;k++)
+			{
+				//translate segment into Others if market share < below min share 
+				var value1 = objectArray[k].Kpi;
+				var value2 = gTotalMarket[objectArray[k].Period];
+				seriesData.push(objectArray[k]);
+			}
+		}
+		
+		
+	jsonDataVoronoi = seriesData;	
+	
+	
+	var margin = {top: 20, right: 95, bottom: 10, left: 125},
+    width = 970 - margin.left - margin.right,
+    height,
+    tickExtension = 20; // extend grid lines beyond scale range
+
+	var formatPercent = d3.format(".0%"),
+		formatTenthPercent = d3.format(".1%"),
+		formatNumber = d3.format(",.3s"),
+		formatDollars = function(d) { return (d < 0 ? "-" : "") + "$" + formatNumber(Math.abs(d)).replace(/G$/, "B"); };
+
+	var nameAll = "Brands and Products";
+
+	var x = d3.scale.linear()
+		.domain([0, .6])
+		.rangeRound([0, width - 60])
+		.clamp(true)
+		.nice();
+
+	var y = d3.scale.ordinal();
+
+	var y0 = d3.scale.ordinal()
+		.domain([nameAll])
+		.range([150]);
+
+	var r = d3.scale.sqrt()
+		.domain([0, 1e9])
+		.range([0, 1]);
+
+	var z = d3.scale.threshold()
+		.domain([.1, .2, .3, .4, .5])
+		.range(["#b35806", "#f1a340", "#fee0b6", "#d8daeb", "#998ec3", "#542788"].reverse());
+
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient("top")
+		.ticks(5)
+		.tickFormat(formatPercent);
+
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient("left")
+		.tickSize(-width + 60 - tickExtension * 2, 0)
+		.tickPadding(6);
+
+	var quadtree = d3.geom.quadtree()
+		.x(function(d) { return d.x; })
+		.y(function(d) { return d.y; });
+
+
+	var svg = d3.select("#analyticsChart").append("svg")
+		.attr("height", 420 + margin.top + margin.bottom)
+		.attr("width", width + margin.left + margin.right)
+	  .append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	d3.select("#analyticsChart").append("svg")
+		.style("margin-top", "20px")
+		.attr("height", 80)
+		.attr("width", width + margin.left + margin.right)
+	  .append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+		.call(renderChartKey);
+
+	var gx = svg.append("g")
+		.attr("class", "g-x g-axis")
+		.call(xAxis);
+
+	var tickLast = gx.selectAll(".g-x .tick:last-of-type");
+
+	tickLast.select("text")
+		.text(function() { return "\u2265 " + this.textContent; });
+
+	tickLast.select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+		.attr("transform", "translate(" + width + ",0)")
+	  .select("text")
+		.text("N.A.");
+
+	var titleX = gx.append("text")
+		.attr("class", "g-title")
+		.attr("y", -9)
+		.style("text-anchor", "end");
+
+	titleX.append("tspan")
+		.attr("x", -20)
+		.style("font-weight", "bold")
+		.text("Effective tax rate");
+
+	titleX.append("tspan")
+		.attr("x", -20)
+		.attr("dy", "1em")
+		.text("2007-12");
+
+	
+		
+	var jsonBrands = d3.nest()
+		  .key(function(d) { return d.Brand; })
+		  .entries(jsonDataVoronoi);
+ 
+ 
+	  var jsonBrandPeriod = d3.nest()
+      .key(function(d) { return d.Brand + "/"+ d.Period; })
+      .entries(jsonDataVoronoi);
+	
+	
+	  // Compute the overall rate for all data.
+	  var overallPrice = d3.sum(jsonDataVoronoi, function(d) {return d.Value;}) / d3.sum(jsonDataVoronoi,function(d) {return d.Units;});
+
+	  // Compute the overall price by brand.
+	  jsonBrands.forEach(function(d) {
+		d.Price = d3.sum(d.values, function(d) {return d.Value;}) / d3.sum(d.values, function(d) {return d.Units;});
+	  });
+
+	  // Sort brands by ascending overall price.
+	  jsonBrands.sort(function(a, b) {
+		return a.price - b.price;
+	  });
+
+	  // Compute the price for each product.
+	  jsonData.forEach(function(d) {
+		d.Price = d.Value / d.Units;
+	  });
+	
+	
+	height = 120 * jsonBrands.length;
+
+	y.domain(jsonBrands.map(function(d)
+	{
+		return d.key;
+	}));
+	  
+	y.rangePoints([10, height], 1);
+
+	svg.append("g")
+	  .attr("class", "g-y g-axis g-y-axis-brand")
+	  .attr("transform", "translate(-" + tickExtension + ",0)")
+	  .call(yAxis.scale(y))
+	  .call(yAxisWrap)
+	  .style("stroke-opacity", 0)
+	  .style("fill-opacity", 0)
+	.selectAll(".tick text,.tick tspan")
+	  .attr("x", -95)
+	  .style("text-anchor", "start");
+
+	svg.append("g")
+	  .attr("class", "g-y g-axis g-y-axis-overall")
+	  .attr("transform", "translate(-" + tickExtension + ",0)")
+	  .call(yAxis.scale(y0))
+	  .call(yAxisWrap);
+
+	var productClip = svg.append("defs").selectAll("clipPath")
+		.data(jsonDataVoronoi)
+		.enter().append("clipPath")
+		  .attr("id", function(d, i) { return "g-clip-product-" + i; })
+		.append("circle")
+		  .attr("cx", function(d) { 
+			return d.cx; 
+			})
+		  .attr("cy", function(d) {
+			return 0 + d.cy - y0(nameAll); 
+		  })
+		  .attr("r", function(d) {
+				rValue = r(d.Units) + 20;
+				//rValue = 10;
+			return rValue;
+			});
+
+	var gVoronoi = svg.append("g")
+	  .attr("class", "g-voronoi")
+
+	gVoronoi.selectAll("path")
+	  .data(jsonDataVoronoi)
+	.enter().append("path")
+	  .attr("clip-path", function(d, i) { return "url(#g-clip-product-" + i + ")"; })
+	  .on("mouseover", mouseover)
+	  .on("mouseout", mouseout);
+
+	gVoronoi.call(updateVoronoi,
+	  function(d) { return 
+		d.cx;
+		},
+	  function(d) { return 
+		d.cy + y0(nameAll);
+		},
+	  420);
+
+  var brand = svg.append("g")
+      .attr("class", "g-brand")
+    .selectAll("g")
+      .data(jsonBrands)
+    .enter().append("g")
+      .attr("transform", function(d) { 
+		return "translate(0," + y(d.key) + ")";
+		});
+
+  var brandNote = d3.select(".g-brand-notes")
+      .style("opacity", 0)
+      .style("display", "none")
+    .selectAll("div")
+      .data(jsonBrands)
+    .enter().append("div")
+      .attr("class", "g-brand-note")
+      .style("top", function(d) { return y(d.key) + "px"; })
+      .html(function(d) { return brandNoteByName[d.key]; });
+
+  var brandproduct = brand.append("g")
+      .attr("class", "g-brand-product")
+    .selectAll("circle")
+      .data(function(d) {
+		return d.values;
+		})
+    .enter().append("circle")
+      .attr("cx", function(d) { 
+		return d.cx; 
+		})
+      .attr("cy", function(d) {
+		return d.cy - y(d.Brand) + y0(nameAll); 
+		})
+      .attr("cy", function(d) { 
+		return d.cy + y0(nameAll); 
+		})
+      .attr("r", function(d) { 
+		rValue = r(d.Units);
+		rValue = 20;
+		return rValue;
+		})
+      .style("fill", function(d) { return isNaN(d.Growth) ? null : z(d.Growth); })
+      .on("mouseover", mouseover)
+      .on("mouseout", mouseout);
+
+  var brandOverall = brand.append("g")
+      .attr("class", "g-overall")
+      //.attr("transform", function(d) { return "translate(" + x(d.Growth) + "," + (y0(nameAll) - y(d.key)) + ")"; })
+      .attr("transform", function(d) {
+		rValue =  "translate(" + 25 + "," + (y0(nameAll) - y(d.key)) + ")"; 
+		return rValue;
+		})
+      .style("stroke-opacity", 0)
+      .style("fill-opacity", 0);
+
+  brandOverall.append("line")
+      .attr("y1", -100)
+      .attr("y2", +127);
+
+  var brandOverallText = brandOverall.append("text")
+      .attr("y", -106);
+
+  brandOverallText.append("tspan")
+      .attr("x", 0)
+      .text(function(d) { return formatPercent(d.Growth); });
+
+  brandOverallText.filter(function(d, i) { return !i; }).append("tspan")
+      .attr("x", 0)
+      .attr("dy", "-11")
+      .style("font-size", "8px")
+      .text("OVERALL");
+
+  var overall = svg.append("g")
+      .attr("class", "g-overall g-overall-all")
+      //.attr("transform", "translate(" + 20 + "," + y0(nameAll) + ")");
+     .attr("transform", "translate(" + x(jsonBrandPeriod) + "," + y0(nameAll) + ")");
+
+  overall.append("line")
+      .attr("y1", -100)
+      .attr("y2", +127);
+
+  var overallText = overall.append("text")
+      .attr("y", -106)
+      .style("font-weight", "bold");
+
+  overallText.append("tspan")
+      .attr("x", 0)
+      .style("font-size", "13px")
+      .text(formatTenthPercent(jsonBrandPeriod));
+
+  overallText.append("tspan")
+      .attr("x", 0)
+      .attr("dy", "-14")
+      .style("font-size", "8px")
+      .text("OVERALL");
+
+  var currentView = "overall";
+
+  d3.selectAll(".g-content button[data-view]")
+      .datum(function(d) { return this.getAttribute("data-view"); })
+      .on("click", transitionView);
+
+  var searchInput = d3.select(".g-search input")
+      .on("keyup", keyuped);
+
+  var searchClear = d3.select(".g-search .g-search-clear")
+      .on("click", function() {
+        searchInput.property("value", "").node().blur();
+        search();
+      });
+
+  var tip = d3.select(".g-tip");
+
+  var tipMetric = tip.selectAll(".g-tip-metric")
+      .datum(function() { return this.getAttribute("data-name"); });
+
+  d3.selectAll(".g-annotations b,.g-brand-notes b")
+      .datum(function() { return new RegExp("\\b" + d3.requote(this.textContent), "i"); })
+      .on("mouseover", mouseoverAnnotation)
+      .on("mouseout", mouseout);
+
+  function keyuped() {
+    if (d3.event.keyCode === 27) {
+      this.value = "";
+      this.blur();
+    }
+    search(this.value.trim());
+  }
+
+  function search(value) {
+    if (value) {
+      var re = new RegExp("\\b" + d3.requote(value), "i");
+      svg.classed("g-searching", true);
+      brandproduct.classed("g-match", function(d) { return re.test(d.Product) || re.test(d.brand) || (d.symbol && re.test(d.symbol)) || (d.alias && re.test(d.alias)); });
+      var matches = d3.selectAll(".g-match");
+      if (matches[0].length === 1) mouseover(matches.datum());
+      else mouseout();
+      searchClear.style("display", null);
+    } else {
+      mouseout();
+      svg.classed("g-searching", false);
+      brandproduct.classed("g-match", false);
+      searchClear.style("display", "none");
+    }
+  }
+
+  function transitionView(view) {
+    if (currentView === view) view = view === "overall" ? "brand" : "overall";
+    d3.selectAll(".g-buttons button[data-view]").classed("g-active", function(v) { return v === view; })
+    switch (currentView = view) {
+      case "overall": return void transitionOverall();
+      case "brand": return void transitionbrand();
+    }
+  }
+
+  function transitionOverall() {
+    gVoronoi.style("display", "none");
+
+    var transition = d3.transition()
+        .duration(750);
+
+    transition.select("svg")
+        .delay(720)
+        .attr("height", 420 + margin.top + margin.bottom)
+        .each("end", function() {
+          gVoronoi.call(updateVoronoi,
+            function(d) { 
+				return d.cx;
+				},
+            function(d) {
+				return d.cy + y0(nameAll); 
+				},
+            420);
+        });
+
+    transition.select(".g-annotations-overall")
+        .each("start", function() { this.style.display = "block"; })
+        .style("opacity", 1);
+
+    transition.select(".g-brand-notes")
+        .style("opacity", 0)
+        .each("end", function() { this.style.display = "none"; });
+
+    transition.selectAll(".g-y-axis-brand")
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    transition.selectAll(".g-y-axis-overall")
+        .style("stroke-opacity", 1)
+        .style("fill-opacity", 1);
+
+    var transitionOverall = transition.select(".g-overall-all")
+        .delay(x(jsonBrandPeriod))
+        .style("stroke-opacity", 1)
+        .style("fill-opacity", 1);
+
+    transitionOverall.select("line")
+        .attr("y2", +127);
+
+    transitionOverall.select("text")
+        .attr("y", -106);
+
+    var transitionbrandOverall = transition.selectAll(".g-brand .g-overall")
+        .delay(function(d) { return x(d.Growth); })
+        .attr("transform", function(d) { 
+			return "translate(" + x(d.Growth) + "," + (y0(nameAll) - y(d.key)) + ")"; 
+			//return "translate(" + 20 + "," + (y0(nameAll) - y(d.key)) + ")"; 
+			})
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    transitionbrandOverall.select("line")
+        .attr("y1", -100)
+        .attr("y2", +127);
+
+    transitionbrandOverall.select("text")
+        .attr("y", -106);
+
+    transition.selectAll(".g-brand-product circle")
+        .delay(function(d) { return d.cx; })
+        .attr("cx", function(d) { 
+			return d.cx; 
+			})
+        .attr("cy", function(d) { 
+			return d.cy - y(d.Brand) + y0(nameAll); 
+			});
+  }
+
+  function transitionbrand() {
+    gVoronoi.style("display", "none");
+
+    var transition = d3.transition()
+        .duration(750);
+
+    transition.select("svg")
+        .attr("height", height + margin.top + margin.bottom)
+      .transition()
+        .delay(720)
+        .each("end", function() {
+          gVoronoi.call(updateVoronoi,
+            function(d) { 
+				return d.x; 
+				},
+            function(d) { 
+				return y(d.Brand) + d.y; 
+				},
+            height);
+        });
+
+    transition.select(".g-annotations-overall")
+        .style("opacity", 0)
+        .each("end", function() { this.style.display = "none"; });
+
+    transition.select(".g-brand-notes")
+        .delay(250)
+        .each("start", function() { this.style.display = "block"; })
+        .style("opacity", 1);
+
+    transition.selectAll(".g-y-axis-brand,.g-brand-note")
+        .delay(250)
+        .style("stroke-opacity", 1)
+        .style("fill-opacity", 1);
+
+    transition.selectAll(".g-y-axis-overall")
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    var transitionOverall = transition.select(".g-overall-all")
+        .delay(x(jsonBrandPeriod))
+        .style("stroke-opacity", 0)
+        .style("fill-opacity", 0);
+
+    transitionOverall.select("line")
+        .attr("y2", height - y0(nameAll));
+//        .attr("y2", height);
+
+    var transitionbrandOverall = transition.selectAll(".g-brand .g-overall")
+        .delay(function(d) { return x(d.Growth); })
+        .attr("transform", function(d) { return "translate(" + x(d.Growth) + ",0)"; })
+        .style("stroke-opacity", 1)
+        .style("fill-opacity", 1);
+
+    transitionbrandOverall.select("line")
+        .attr("y1", -25)
+        .attr("y2", +25);
+
+    transitionbrandOverall.select("text")
+        .attr("y", -31);
+
+    transition.selectAll(".g-brand-product circle")
+        .delay(function(d) { return d.x; })
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+  }
+
+  function updateVoronoi(gVoronoi, x, y, height) {
+    productClip
+        .attr("cx", x)
+        .attr("cy", y);
+
+    gVoronoi
+        .style("display", null)
+      .selectAll("path")
+        .data(d3.geom.voronoi().x(x).y(y)(jsonDataVoronoi))
+        .attr("d", function(d)
+		{
+			var rValue = "M" + d.join("L") + "Z"; 
+			return rValue;
+		})
+        .datum(function(d) {
+			return d.point;
+			});
+  }
+
+  function mouseoverAnnotation(re) {
+    var matches = brandproduct.filter(function(d) { return re.test(d.Product) || re.test(d.alias); }).classed("g-active", true);
+    if (d3.sum(matches, function(d) { return d.length; }) === 1) mouseover(matches.datum());
+    else tip.style("display", "none");
+  }
+
+  function mouseover(d) {
+    brandproduct.filter(function(c) { return c === d; }).classed("g-active", true);
+
+    var dx, dy;
+    if (currentView === "overall") 
+		dx = d.cx, dy = d.cy + y0(nameAll);
+    else
+		dx = d.x, dy = d.y + y(d.Brand);
+    dy -= 19, dx += 50; // margin fudge factors
+
+    tip.style("display", null)
+        .style("top", (dy - r(d.Units)) + "px")
+        .style("left", dx + "px");
+
+    tip.select(".g-tip-title")
+        .text(d.Product);
+
+    tipMetric.select(".g-tip-metric-value").text(function(name) {
+      switch (name) {
+        case "Growth": return isNaN(d.Growth) ? "N.A." : formatPercent(d.Growth);
+        case "taxes": return formatDollars(d.taxes);
+        case "earnings": return formatDollars(d.earnings);
+      }
+    });
+  }
+
+  function mouseout() {
+    tip.style("display", "none");
+    brandproduct.filter(".g-active").classed("g-active", false);
+  }
+  
+	function renderChartKey(g) {
+	var formatPercent = d3.format(".0%"),
+      formatNumber = d3.format(".0f");
+
+  // A position encoding for the key only.
+  var x = d3.scale.linear()
+      .domain([0, .6])
+      .range([0, 240]);
+
+  var xAxis = d3.svg.axis()
+      .scale(x)
+      .orient("bottom")
+      .tickSize(13)
+      .tickValues(z.domain())
+      .tickFormat(function(d) { return d === .5 ? formatPercent(d) : formatNumber(100 * d); });
+
+  g.append("text")
+      .attr("x", -25)
+      .style("text-anchor", "end")
+      .style("font", "bold 9px sans-serif")
+      .text("CHART KEY");
+
+  var gColor = g.append("g")
+      .attr("class", "g-key-color")
+      .attr("transform", "translate(140,-7)");
+
+  gColor.selectAll("rect")
+      .data(z.range().map(function(d, i) {
+        return {
+          x0: i ? x(z.domain()[i - 1]) : x.range()[0],
+          x1: i < 4 ? x(z.domain()[i]) : x.range()[1],
+          z: d
+        };
+      }))
+    .enter().append("rect")
+      .attr("height", 8)
+      .attr("x", function(d) { return d.x0; })
+      .attr("width", function(d) { return d.x1 - d.x0; })
+      .style("fill", function(d) { return d.z; });
+
+  gColor.call(xAxis);
+
+  var gColorText = g.append("text")
+      .attr("x", 140 - 6)
+      .style("text-anchor", "end");
+
+  gColorText.append("tspan")
+      .style("font-weight", "bold")
+      .text("Color");
+
+  gColorText.append("tspan")
+      .style("fill", "#777")
+      .text(" shows effective growth");
+
+  var gSize = g.append("g")
+      .attr("class", "g-key-size")
+      .attr("transform", "translate(580,-7)");
+
+  var gSizeInstance = gSize.selectAll("g")
+      .data([1e9, 10e9, 50e9, 100e9])
+    .enter().append("g")
+      .attr("class", "g-brand");
+
+  gSizeInstance.append("circle")
+    .attr("r", r);
+
+  gSizeInstance.append("text")
+      .attr("x", function(d) { return r(d) + 4; })
+      .attr("dy", ".35em")
+      .text(function(d) { return "$" + Math.round(d / 1e9) + "B"; });
+
+  var gSizeX = 0;
+
+  gSizeInstance.attr("transform", function() {
+    var t = "translate(" + gSizeX + ",3)";
+    gSizeX += this.getBBox().width + 15;
+    return t;
+  });
+
+  var gSizeText = g.append("text")
+      .attr("x", 580 - 10)
+      .style("text-anchor", "end");
+
+  gSizeText.append("tspan")
+      .style("font-weight", "bold")
+      .text("Size");
+
+  gSizeText.append("tspan")
+      .style("fill", "#777")
+      .text(" shows market capitalization");
+}
+
+	function yAxisWrap(g) {
+	  g.selectAll(".tick text")
+		.filter(function(d) { return /[ ]/.test(d) && this.getComputedTextLength() > margin.left - tickExtension - 10; })
+		  .attr("dy", null)
+		  .each(function(d) {
+			d3.select(this).text(null).selectAll("tspan")
+				.data(d.split(" "))
+			  .enter().append("tspan")
+				.attr("x", this.getAttribute("x"))
+				.attr("dy", function(d, i) { return (i * 1.35 - .35) + "em"; })
+				.text(function(d) { return d; });
+		  });
+	}
+
+	function taxes(d) {
+	  return d.taxes;
+	}
+
+	function earnings(d) {
+	  return d.earnings;
+	}
+
+	function rate(taxes, earnings) {
+	  return earnings <= 0 ? NaN : taxes / earnings;
+	}
+
+	function type(d) {
+	  d.x = +d.x;
+	  d.y = +d.y;
+	  d.cx = +d.cx;
+	  d.cy = +d.cy;
+	  d.taxes *= 1e6;
+	  d.earnings *= 1e6;
+	  d.capitalization *= 1e6;
+	  return d;
+	}	
+			
+			
+  }  // MakeVoronoi
+	
+	
+
+	
 	// Group of helper functions starts here
 	
 	// nodes, highest first, but excluding the root.
@@ -1304,8 +2178,8 @@ function GFK_NEO_RUN(theDataType, theDataID)
 	  d3.select("#analyticsBreadcrump").select("svg").remove();
 
 	  var trail = d3.select("#analyticsBreadcrump").append("svg:svg")
-		  .attr("width", 400)
-		  .attr("height", 50)
+		  //.attr("width", 400)
+		  //.attr("height", 50)
 		  .attr("id", "trail");
 	  // Add the label at the end, for the percentage.
 	  trail.append("svg:text")
@@ -1350,7 +2224,9 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		  .attr("y", bread.h / 2)
 		  .attr("dy", "0.35em")
 		  .attr("text-anchor", "middle")
-		  .text(function(d) { return (d.name || "").substr(0,10) || "all"; });
+		  .text(function(d) {
+			return (d.name || "").substr(0,10) || "all";
+			});
 
 		// Set position for entering and updating nodes.
 		g.attr("transform", function(d, i) {
@@ -1383,4 +2259,6 @@ function GFK_NEO_RUN(theDataType, theDataID)
 		theLink = "<a href=" + theLinkTarget +">Search...</a>"; 
 		//$$("D3Link").setValue(theLink);
 	} // update breadcrumps
+	
+	
 }
